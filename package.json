@@ -7,7 +7,7 @@
 	"scripts": {
 		"build": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/build.sh",
 		"release": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/release.sh",
-		"test": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/test.sh"
+		"test": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/test.sh dataRoot=\"./test\""
 	},
 	"devDependencies": {
 		"@types/follow-redirects": "^1.14.3",
@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
 		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
-		"follow-redirects": "^1.15.4"
+		"follow-redirects": "^1.15.4",
+		"pdf2json": "^3.1.2"
 	}
 }

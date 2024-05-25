@@ -1,0 +1,12 @@
+{
+"name":"@rsc-utils/io-utils",
+"version":"0.0.1",
+"branch":"main",
+"commit":"49a70fcad11c63a351be13230d490424cc402ad8",
+"commitSubject":"include pdf-utils",
+"commitTs":1716615863000,
+"commitDate":"2024-05-24-2244",
+"buildTs":1716615900000,
+"buildDate":"2024-05-24-2245",
+"author":"Randal"
+}

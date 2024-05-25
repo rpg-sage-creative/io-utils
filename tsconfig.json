@@ -1,0 +1,41 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"alwaysStrict": true,
+		"allowSyntheticDefaultImports": true,
+
+		"forceConsistentCasingInFileNames": true,
+
+		"lib": [ "DOM", "ES2022" ],
+
+		"module": "ES2022",
+		"moduleResolution": "Node",
+
+		"newLine": "LF",
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+
+		"outDir": "./build",
+
+		"pretty": true,
+
+		"removeComments": true,
+		"rootDir": "./src",
+
+		"skipLibCheck": true,
+
+		"strict": true,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"stripInternal": true,
+
+		"target": "ES2022"
+	},
+	"include": ["src"]
+}

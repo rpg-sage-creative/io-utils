@@ -1,5 +1,5 @@
 {
-	"name": "@rsc-utils/x-utils",
+	"name": "@rsc-utils/io-utils",
 	"version": "0.0.0",
 	"license": "LGPL-3.0-or-later",
 	"main": "build/index.js",
@@ -10,9 +10,12 @@
 		"test": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/test.sh"
 	},
 	"devDependencies": {
+		"@types/follow-redirects": "^1.14.3",
 		"@types/node": "^18.18.7"
 	},
 	"dependencies": {
-		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils"
+		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
+		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
+		"follow-redirects": "^1.15.4"
 	}
 }

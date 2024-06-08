@@ -1,5 +1,6 @@
 import { verbose } from "@rsc-utils/core-utils";
-import { createWriteStream, existsSync, mkdirSync, rmSync, statSync } from "fs";
+import {} from "@rsc-utils/progress-utils";
+import { WriteStream, createWriteStream, existsSync, mkdirSync, rmSync, statSync } from "fs";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
 export function cacheFile(...args) {

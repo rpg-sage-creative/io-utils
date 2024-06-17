@@ -20,6 +20,9 @@ runTests(async function test_listFiles() {
 	const filteredFiles = await filterFiles(path, f => f !== "files");
 	assert(_filteredFiles, () => filteredFiles);
 
+	const mjsFiles = await filterFiles(path, "mjs");
+	assert(_filteredFiles, () => mjsFiles);
+
 	const _recursiveFiles = [
 		'files',
 		'files/jsonDb.json.db',

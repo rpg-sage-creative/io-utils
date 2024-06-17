@@ -1,6 +1,8 @@
+import { createExtFilter } from "./internal/createExtFilter.js";
 import { listFilesSync } from "./listFilesSync.js";
-export function filterFilesSync(path, filter, recursive) {
+export function filterFilesSync(path, extOrFilter, recursive) {
     const output = [];
+    const filter = typeof (extOrFilter) === "function" ? extOrFilter : createExtFilter(extOrFilter);
     const files = listFilesSync(path);
     for (const fileName of files) {
         const filePath = `${path}/${fileName}`;

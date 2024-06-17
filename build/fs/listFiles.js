@@ -1,4 +1,5 @@
 import { readdir } from "fs";
+import { createExtFilter } from "./internal/createExtFilter.js";
 export function listFiles(path, ext) {
     return new Promise((resolve, reject) => {
         readdir(path, (error, files) => {
@@ -7,8 +8,7 @@ export function listFiles(path, ext) {
             }
             else {
                 if (ext) {
-                    const regex = new RegExp(`\\.${ext}$`, "i");
-                    resolve(files.filter(file => file.match(regex)));
+                    resolve(files.filter(createExtFilter(ext)));
                 }
                 else {
                     resolve(files);

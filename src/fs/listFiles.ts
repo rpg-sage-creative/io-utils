@@ -1,4 +1,5 @@
 import { readdir } from "fs";
+import { createExtFilter } from "./internal/createExtFilter.js";
 
 /**
  * Lists all the filenames found in the given path.
@@ -17,8 +18,7 @@ export function listFiles(path: string, ext?: string): Promise<string[]> {
 				reject(error);
 			}else {
 				if (ext) {
-					const regex = new RegExp(`\\.${ext}$`, "i");
-					resolve(files.filter(file => file.match(regex)));
+					resolve(files.filter(createExtFilter(ext)));
 				}else {
 					resolve(files);
 				}

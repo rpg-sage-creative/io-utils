@@ -1,5 +1,6 @@
 import { error } from "@rsc-utils/core-utils";
 import { readdirSync } from "fs";
+import { createExtFilter } from "./internal/createExtFilter.js";
 
 /**
  * Lists all the filenames found in the given path.
@@ -15,8 +16,7 @@ export function listFilesSync(path: string, ext?: string): string[] {
 	try {
 		const files = readdirSync(path);
 		if (ext) {
-			const regex = new RegExp(`\\.${ext}$`, "i");
-			return files.filter(file => file.match(regex));
+			return files.filter(createExtFilter(ext));
 		}
 		return files;
 	}catch(ex) {

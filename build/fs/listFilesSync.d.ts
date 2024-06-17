@@ -1,8 +1,4 @@
 /**
- * Lists all the filenames found in the given path.
+ * Lists all the filenames found in the given path, filtered by extension if given.
  */
-export declare function listFilesSync(path: string): string[];
-/**
- * Lists all the filenames found in the given path that have the given extension.
- */
-export declare function listFilesSync(path: string, ext: string): string[];
+export declare function listFilesSync(path: string, ext?: string): string[];

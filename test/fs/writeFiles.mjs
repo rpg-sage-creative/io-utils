@@ -1,5 +1,5 @@
 import { assert, runTests } from "@rsc-utils/core-utils";
-import { appendJsonDb, deleteFileSync, readTextSync, writeFile, writeFileSync } from "../../build/index.js";
+import { appendJsonDb, deleteFileSync, readTextSync, writeFile, writeFileSync, writeJsonDbSync, writeJsonDb } from "../../build/index.js";
 
 const TEST_ROOT = "./test/fs";
 
@@ -21,6 +21,20 @@ runTests(async function test_writeFiles() {
 	await writeFile(filePath, {"index":0,"name":"zero"});
 	assert(`{"index":0,"name":"zero"}`, readTextSync, filePath);
 	await appendJsonDb(filePath, {"index":1,"name":"one"});
+	assert(`{"index":0,"name":"zero"}\n{"index":1,"name":"one"}`, readTextSync, filePath);
+	assert(true, deleteFileSync, filePath);
+
+	await appendJsonDb(filePath, {"index":0,"name":"zero"});
+	assert(`{"index":0,"name":"zero"}`, readTextSync, filePath);
+	await appendJsonDb(filePath, {"index":1,"name":"one"});
+	assert(`{"index":0,"name":"zero"}\n{"index":1,"name":"one"}`, readTextSync, filePath);
+	assert(true, deleteFileSync, filePath);
+
+	writeJsonDbSync(filePath, [{"index":0,"name":"zero"},{"index":1,"name":"one"}]);
+	assert(`{"index":0,"name":"zero"}\n{"index":1,"name":"one"}`, readTextSync, filePath);
+	assert(true, deleteFileSync, filePath);
+
+	await writeJsonDb(filePath, [{"index":0,"name":"zero"},{"index":1,"name":"one"}]);
 	assert(`{"index":0,"name":"zero"}\n{"index":1,"name":"one"}`, readTextSync, filePath);
 	assert(true, deleteFileSync, filePath);
 

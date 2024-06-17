@@ -1,8 +1,4 @@
 /**
- * Lists all the filenames found in the given path.
+ * Lists all the filenames found in the given path, filtered by extension if given.
  */
-export declare function listFiles(path: string): Promise<string[]>;
-/**
- * Lists all the filenames found in the given path that have the given extension.
- */
-export declare function listFiles(path: string, ext: string): Promise<string[]>;
+export declare function listFiles(path: string, ext?: string): Promise<string[]>;

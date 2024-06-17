@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.3",
+"version":"0.0.4",
 "branch":"main",
-"commit":"6cc5da5410b6bf075277d713c607da623b41f62b",
-"commitSubject":"allow filter by extension, reuse extension filter regex",
-"commitTs":1718658891000,
-"commitDate":"2024-06-17-1414",
-"buildTs":1718658942000,
-"buildDate":"2024-06-17-1415",
+"commit":"3664f484a829a76561780909ecf1abd1be7f71dc",
+"commitSubject":"fix appendJsonDb, add writeJsonDb/Sync",
+"commitTs":1718660919000,
+"commitDate":"2024-06-17-1448",
+"buildTs":1718660941000,
+"buildDate":"2024-06-17-1449",
 "author":"Randal"
 }

@@ -31,5 +31,5 @@ export function appendJsonDb<T>(filePathAndName: string, content: T, makeDir?: b
 		}else {
 			append(filePathAndName, content).then(resolve, reject);
 		}
-	})
+	});
 }

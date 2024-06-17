@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.2",
+"version":"0.0.3",
 "branch":"main",
-"commit":"9f27b4aa46d1b63b7750059e6433e341c74a9df7",
-"commitSubject":"use snowflakes; downgrade to stable pdf2json",
-"commitTs":1718081573000,
-"commitDate":"2024-06-10-2152",
-"buildTs":1718081615000,
-"buildDate":"2024-06-10-2153",
+"commit":"6cc5da5410b6bf075277d713c607da623b41f62b",
+"commitSubject":"allow filter by extension, reuse extension filter regex",
+"commitTs":1718658891000,
+"commitDate":"2024-06-17-1414",
+"buildTs":1718658942000,
+"buildDate":"2024-06-17-1415",
 "author":"Randal"
 }

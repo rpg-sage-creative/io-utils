@@ -1,4 +1,5 @@
 import { createExtFilter } from "./internal/createExtFilter.js";
+import { isDirSync } from "./isDirSync.js";
 import { listFilesSync } from "./listFilesSync.js";
 export function filterFilesSync(path, extOrFilter, recursive) {
     const output = [];
@@ -10,7 +11,7 @@ export function filterFilesSync(path, extOrFilter, recursive) {
         if (result) {
             output.push(filePath);
         }
-        if (recursive) {
+        if (recursive && isDirSync(filePath)) {
             output.push(...filterFilesSync(filePath, filter, true));
         }
     }

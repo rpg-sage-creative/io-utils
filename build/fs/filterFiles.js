@@ -1,5 +1,6 @@
 import { isPromise } from "util/types";
 import { createExtFilter } from "./internal/createExtFilter.js";
+import { isDir } from "./isDir.js";
 import { listFiles } from "./listFiles.js";
 export async function filterFiles(path, extOrFilter, recursive) {
     const output = [];
@@ -12,7 +13,7 @@ export async function filterFiles(path, extOrFilter, recursive) {
         if (result) {
             output.push(filePath);
         }
-        if (recursive) {
+        if (recursive && (await isDir(filePath))) {
             output.push(...(await filterFiles(filePath, filter, true)));
         }
     }

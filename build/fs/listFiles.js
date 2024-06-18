@@ -6,13 +6,11 @@ export function listFiles(path, ext) {
             if (error) {
                 reject(error);
             }
+            else if (ext) {
+                resolve(files.filter(createExtFilter(ext)));
+            }
             else {
-                if (ext) {
-                    resolve(files.filter(createExtFilter(ext)));
-                }
-                else {
-                    resolve(files);
-                }
+                resolve(files);
             }
         });
     });

@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.4",
+"version":"0.0.5",
 "branch":"main",
-"commit":"3664f484a829a76561780909ecf1abd1be7f71dc",
-"commitSubject":"fix appendJsonDb, add writeJsonDb/Sync",
-"commitTs":1718660919000,
-"commitDate":"2024-06-17-1448",
-"buildTs":1718660941000,
-"buildDate":"2024-06-17-1449",
+"commit":"07832f111700d0d4bfa1dcb5938cfa11a90769d7",
+"commitSubject":"add and utilize isDir and isDirSync",
+"commitTs":1718691848000,
+"commitDate":"2024-06-17-2324",
+"buildTs":1718691926000,
+"buildDate":"2024-06-17-2325",
 "author":"Randal"
 }

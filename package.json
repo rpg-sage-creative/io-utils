@@ -17,6 +17,6 @@
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
 		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
 		"follow-redirects": "^1.15.4",
-		"pdf2json": "^2.0.2"
+		"pdf2json": "3.0.5"
 	}
 }

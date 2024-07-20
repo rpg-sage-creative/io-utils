@@ -1,7 +1,9 @@
 import { stringify, verbose } from "@rsc-utils/core-utils";
 import type { ProgressTracker } from "@rsc-utils/progress-utils";
+import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
+import { fileExistsSync } from "../fs/fileExistsSync.js";
 
 type Opts = { progressTracker?:ProgressTracker; logPercent?:boolean; };
 
@@ -21,6 +23,14 @@ export function getBuffer<T = any>(url: string, postData: T): Promise<Buffer>;
 export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Promise<Buffer> {
 	if (typeof(url) !== "string") {
 		return Promise.reject(new Error("Invalid Url"));
+	}
+	if (/^file:\/\//i.test(url)) {
+		const path = url.slice(6);
+		if (fileExistsSync(path)) {
+			return readFile(path);
+		}else {
+			return Promise.reject(new Error("Invalid Path"));
+		}
 	}
 	if (!(/^https?:\/\//i).test(url)) {
 		url = "https://" + url;

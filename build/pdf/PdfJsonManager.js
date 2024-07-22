@@ -13,6 +13,9 @@ export class PdfJsonManager {
         this.isEmpty = this.isDefined ? Object.keys(this.json).length > 0 : false;
         this.fields = PdfJsonFieldManager.from(this.json);
     }
+    get title() {
+        return this.json?.Meta?.Title;
+    }
     hasAllFields(...names) {
         return names.every(name => this.hasField(name));
     }

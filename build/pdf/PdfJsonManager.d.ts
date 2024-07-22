@@ -9,6 +9,7 @@ export declare class PdfJsonManager<T extends PdfJson = PdfJson> {
     isEmpty: boolean;
     json?: T;
     constructor(input: Optional<T | PdfJsonManager<T>>);
+    get title(): string | undefined;
     hasAllFields(...names: string[]): boolean;
     /**
      * Iterates through all Pages.Texts.R.T and checks for each snippetToFind using .includes.

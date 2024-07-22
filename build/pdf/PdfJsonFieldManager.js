@@ -3,9 +3,22 @@ import { stringOrUndefined } from "./internal/stringOrUndefined.js";
 export class PdfJsonFieldManager {
     fields;
     initialLength;
-    constructor(fields) {
-        this.fields = fields;
-        this.initialLength = fields.length;
+    constructor(input) {
+        if (input) {
+            if (input instanceof PdfJsonFieldManager) {
+                this.fields = input.fields.slice();
+            }
+            else if (Array.isArray(input)) {
+                this.fields = input;
+            }
+            else {
+                this.fields = collectFields(input);
+            }
+        }
+        else {
+            this.fields = [];
+        }
+        this.initialLength = this.fields.length;
     }
     get isEmpty() {
         return this.fields.length === 0;
@@ -37,9 +50,6 @@ export class PdfJsonFieldManager {
         }
     }
     static from(input) {
-        if (input && input instanceof PdfJsonFieldManager) {
-            return new PdfJsonFieldManager(input.fields.slice());
-        }
-        return new PdfJsonFieldManager(collectFields(input));
+        return new PdfJsonFieldManager(input);
     }
 }

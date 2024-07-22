@@ -2,9 +2,9 @@ import type { Optional } from "@rsc-utils/core-utils";
 import type { Field } from "./internal/types.js";
 import type { PdfJson } from "./types.js";
 export declare class PdfJsonFieldManager {
-    private fields;
+    fields: Field[];
     initialLength: number;
-    constructor(fields: Field[]);
+    constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>);
     get isEmpty(): boolean;
     get length(): number;
     /** Returns the given field by matching the name. */

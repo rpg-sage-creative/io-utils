@@ -5,10 +5,24 @@ import type { CheckField, Field, TextField } from "./internal/types.js";
 import type { PdfJson } from "./types.js";
 
 export class PdfJsonFieldManager {
+	public fields: Field[];
 	public initialLength: number;
 
-	public constructor(private fields: Field[]) {
-		this.initialLength = fields.length;
+	public constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>) {
+		if (input) {
+			if (input instanceof PdfJsonFieldManager) {
+				this.fields = input.fields.slice();
+
+			}else if (Array.isArray(input)) {
+				this.fields = input;
+
+			}else {
+				this.fields = collectFields(input);
+			}
+		}else {
+			this.fields = [];
+		}
+		this.initialLength = this.fields.length;
 	}
 
 	public get isEmpty(): boolean {
@@ -55,10 +69,7 @@ export class PdfJsonFieldManager {
 	}
 
 	public static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager {
-		if (input && input instanceof PdfJsonFieldManager) {
-			return new PdfJsonFieldManager(input.fields.slice());
-		}
-		return new PdfJsonFieldManager(collectFields(input));
+		return new PdfJsonFieldManager(input);
 	}
 
 }

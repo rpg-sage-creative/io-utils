@@ -8,22 +8,30 @@ export class PdfJsonManager<T extends PdfJson = PdfJson> {
 	public isDefined: boolean;
 	/** Does this created with json that has keys.  */
 	public isEmpty: boolean;
+	public json?: T;
 
-	public constructor(public json: Optional<T>) {
-		this.isDefined = isDefined(json);
-		this.isEmpty = this.isDefined ? Object.keys(json as any).length > 0 : false;
-		this.fields = PdfJsonFieldManager.from(json);
+	public constructor(input: Optional<T | PdfJsonManager<T>>) {
+		if (input) {
+			this.json = input instanceof PdfJsonManager ? input.json : input;
+		}
+		this.isDefined = isDefined(this.json);
+		this.isEmpty = this.isDefined ? Object.keys(this.json as T).length > 0 : false;
+		this.fields = PdfJsonFieldManager.from(this.json);
 	}
 
 	public getString(name: string): string | undefined {
 		return this.fields.getValue(name) ?? undefined;
 	}
 
-	public isChecked(key: string): boolean {
-		return this.fields.getChecked(key) === true;
+	public hasField(name: string): boolean {
+		return this.fields.has(name);
 	}
 
-	public static from<U extends PdfJson>(json: Optional<U>): PdfJsonManager<U> {
-		return new PdfJsonManager(json);
+	public isChecked(name: string): boolean {
+		return this.fields.getChecked(name) === true;
+	}
+
+	public static from<U extends PdfJson>(input: Optional<U | PdfJsonManager<U>>): PdfJsonManager<U> {
+		return new PdfJsonManager(input);
 	}
 }

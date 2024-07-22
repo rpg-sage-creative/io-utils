@@ -54,7 +54,10 @@ export class PdfJsonFieldManager {
 		}
 	}
 
-	public static from<U extends PdfJson>(input: Optional<U>): PdfJsonFieldManager {
+	public static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager {
+		if (input && input instanceof PdfJsonFieldManager) {
+			return new PdfJsonFieldManager(input.fields.slice());
+		}
 		return new PdfJsonFieldManager(collectFields(input));
 	}
 

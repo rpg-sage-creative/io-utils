@@ -21,5 +21,5 @@ export declare class PdfJsonFieldManager {
     findValue(name: string, remove: boolean): string | undefined;
     /** Removes the field so that it cannot be reused. */
     private removeField;
-    static from<U extends PdfJson>(input: Optional<U>): PdfJsonFieldManager;
+    static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager;
 }

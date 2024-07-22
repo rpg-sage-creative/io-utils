@@ -37,6 +37,9 @@ export class PdfJsonFieldManager {
         }
     }
     static from(input) {
+        if (input && input instanceof PdfJsonFieldManager) {
+            return new PdfJsonFieldManager(input.fields.slice());
+        }
         return new PdfJsonFieldManager(collectFields(input));
     }
 }

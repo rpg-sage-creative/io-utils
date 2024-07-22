@@ -1,9 +1,9 @@
 import { stringify, verbose } from "@rsc-utils/core-utils";
 import type { ProgressTracker } from "@rsc-utils/progress-utils";
+import { fileExistsSync } from "../fs/fileExistsSync.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
-import { fileExistsSync } from "../fs/fileExistsSync.js";
 
 type Opts = { progressTracker?:ProgressTracker; logPercent?:boolean; };
 

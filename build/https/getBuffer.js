@@ -1,8 +1,8 @@
 import { stringify, verbose } from "@rsc-utils/core-utils";
+import { fileExistsSync } from "../fs/fileExistsSync.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
-import { fileExistsSync } from "../fs/fileExistsSync.js";
 export function getBuffer(url, postData, opts) {
     if (typeof (url) !== "string") {
         return Promise.reject(new Error("Invalid Url"));

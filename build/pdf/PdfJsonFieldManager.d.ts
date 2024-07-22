@@ -10,16 +10,19 @@ export declare class PdfJsonFieldManager {
     /** Returns the given field by matching the name. */
     find<T extends Field>(name: string): T | undefined;
     /**
-     * Finds the given field and returns true if the field is checked.
-     * Also removes the field from the fields array.
+     * Finds the given field and returns true/false if the checked value is boolean.
+     * Returns null if the checked value is not boolean.
+     * Returns undefined if not found.
      */
-    findChecked(name: string, remove: boolean): boolean;
+    getChecked(name: string): Optional<boolean>;
     /**
-     * Finds the given field and returns the value as a non-blank string or undefined.
-     * Also removes the field from the fields array.
+     * Finds the given field and returns the value as a non-blank string.
+     * Returns null if the value is not a string or empty.
+     * Returns undefined if not found.
      */
-    findValue(name: string, remove: boolean): string | undefined;
+    getValue(name: string): Optional<string>;
+    has(name: string): boolean;
     /** Removes the field so that it cannot be reused. */
-    private removeField;
+    remove(field: Optional<Field | string>): void;
     static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager;
 }

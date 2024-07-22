@@ -1,5 +1,4 @@
 import { collectFields } from "./internal/collectFields.js";
-import { stringOrUndefined } from "./internal/stringOrUndefined.js";
 export class PdfJsonFieldManager {
     fields;
     initialLength;
@@ -29,19 +28,33 @@ export class PdfJsonFieldManager {
     find(name) {
         return this.fields.find(field => field.name === name);
     }
-    findChecked(name, remove) {
+    getChecked(name) {
         const field = this.find(name);
-        if (remove)
-            this.removeField(field);
-        return field?.checked === true;
+        if (field) {
+            if (typeof (field.checked) === "boolean") {
+                return field.checked;
+            }
+            return null;
+        }
+        return undefined;
     }
-    findValue(name, remove) {
+    getValue(name) {
         const field = this.find(name);
-        if (remove)
-            this.removeField(field);
-        return stringOrUndefined(field?.value);
+        if (field) {
+            if (typeof (field.value) === "string") {
+                return field.value;
+            }
+            return null;
+        }
+        return undefined;
     }
-    removeField(field) {
+    has(name) {
+        return this.find(name) !== undefined;
+    }
+    remove(field) {
+        if (typeof (field) === "string") {
+            field = this.find(field);
+        }
         if (field) {
             const fieldIndex = this.fields.indexOf(field);
             if (fieldIndex > -1) {

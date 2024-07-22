@@ -9,7 +9,7 @@ export declare class PdfJsonManager<T extends PdfJson = PdfJson> {
     /** Does this created with json that has keys.  */
     isEmpty: boolean;
     constructor(json: Optional<T>);
-    getValue(key: string): string | undefined;
+    getNonBlankString(name: string): string | undefined;
     isChecked(key: string): boolean;
     static from<U extends PdfJson>(json: Optional<U>): PdfJsonManager<U>;
 }

@@ -1,6 +1,5 @@
 import type { Optional } from "@rsc-utils/core-utils";
 import { collectFields } from "./internal/collectFields.js";
-import { stringOrUndefined } from "./internal/stringOrUndefined.js";
 import type { CheckField, Field, TextField } from "./internal/types.js";
 import type { PdfJson } from "./types.js";
 
@@ -39,27 +38,46 @@ export class PdfJsonFieldManager {
 	}
 
 	/**
-	 * Finds the given field and returns true if the field is checked.
-	 * Also removes the field from the fields array.
+	 * Finds the given field and returns true/false if the checked value is boolean.
+	 * Returns null if the checked value is not boolean.
+	 * Returns undefined if not found.
 	 */
-	public findChecked(name: string, remove: boolean): boolean {
+	public getChecked(name: string): Optional<boolean> {
 		const field = this.find<CheckField>(name);
-		if (remove) this.removeField(field);
-		return field?.checked === true;
+		if (field) {
+			if (typeof(field.checked) === "boolean") {
+				return field.checked;
+			}
+			return null;
+		}
+		return undefined;
 	}
 
 	/**
-	 * Finds the given field and returns the value as a non-blank string or undefined.
-	 * Also removes the field from the fields array.
+	 * Finds the given field and returns the value as a non-blank string.
+	 * Returns null if the value is not a string or empty.
+	 * Returns undefined if not found.
 	 */
-	public findValue(name: string, remove: boolean): string | undefined {
+	public getValue(name: string): Optional<string> {
 		const field = this.find<TextField>(name);
-		if (remove) this.removeField(field);
-		return stringOrUndefined(field?.value);
+		if (field) {
+			if (typeof(field.value) === "string") {
+				return field.value;
+			}
+			return null;
+		}
+		return undefined;
+	}
+
+	public has(name: string): boolean {
+		return this.find(name) !== undefined;
 	}
 
 	/** Removes the field so that it cannot be reused. */
-	private removeField(field: Optional<Field>): void {
+	public remove(field: Optional<Field | string>): void {
+		if (typeof(field) === "string") {
+			field = this.find(field);
+		}
 		if (field) {
 			const fieldIndex = this.fields.indexOf(field);
 			if (fieldIndex > -1) {

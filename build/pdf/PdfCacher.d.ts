@@ -1,4 +1,4 @@
-import type { Optional } from "./internal/types.js";
+import { type Optional } from "@rsc-utils/core-utils";
 /** Copies a pdf from the given url to a local file before trying to read it. */
 export declare class PdfCacher {
     private url;

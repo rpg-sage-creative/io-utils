@@ -1,4 +1,4 @@
-import type { Field, RawJson } from "./internal/types.js";
+import type { Field, PdfJson } from "./internal/types.js";
 export declare class PdfJsonFieldManager {
     private fields;
     constructor(fields: Field[]);
@@ -16,5 +16,5 @@ export declare class PdfJsonFieldManager {
     findValue(name: string): string | undefined;
     /** Removes the field so that it cannot be reused. */
     private removeField;
-    static from<T extends RawJson>(input: T): PdfJsonFieldManager;
+    static from<T extends PdfJson>(input: T): PdfJsonFieldManager;
 }

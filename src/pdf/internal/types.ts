@@ -16,6 +16,3 @@ export type BoxsetJson = { boxes:{ id?:{ Id:string; }; T?:{ Name:string; }; chec
 
 /** @internal */
 export type PageJson = { Fields:FieldJson[]; Boxsets:BoxsetJson[]; Texts:{ R?:{ T:string; }[]; }[]; };
-
-/** Represents the JSON extracted from a PDF. */
-export type PdfJson = { Pages:PageJson[]; Meta?:{ Title?:string; }; };

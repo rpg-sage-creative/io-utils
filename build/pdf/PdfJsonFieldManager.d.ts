@@ -1,4 +1,5 @@
-import type { Field, PdfJson } from "./internal/types.js";
+import type { Field } from "./internal/types.js";
+import type { PdfJson } from "./types.js";
 export declare class PdfJsonFieldManager {
     private fields;
     constructor(fields: Field[]);

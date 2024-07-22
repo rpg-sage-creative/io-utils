@@ -1,7 +1,6 @@
 import { isDefined, type Optional } from "@rsc-utils/core-utils";
 import { PdfJsonFieldManager } from "./PdfJsonFieldManager.js";
 import type { PdfJson } from "./types.js";
-import { stringOrUndefined } from "./internal/stringOrUndefined.js";
 
 export class PdfJsonManager<T extends PdfJson = PdfJson> {
 	public fields: PdfJsonFieldManager;
@@ -16,8 +15,8 @@ export class PdfJsonManager<T extends PdfJson = PdfJson> {
 		this.fields = PdfJsonFieldManager.from(json);
 	}
 
-	public getNonBlankString(name: string): string | undefined {
-		return stringOrUndefined(this.fields.getValue(name));
+	public getString(name: string): string | undefined {
+		return this.fields.getValue(name) ?? undefined;
 	}
 
 	public isChecked(key: string): boolean {

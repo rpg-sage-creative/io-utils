@@ -1,6 +1,5 @@
 import { isDefined } from "@rsc-utils/core-utils";
 import { PdfJsonFieldManager } from "./PdfJsonFieldManager.js";
-import { stringOrUndefined } from "./internal/stringOrUndefined.js";
 export class PdfJsonManager {
     json;
     fields;
@@ -12,8 +11,8 @@ export class PdfJsonManager {
         this.isEmpty = this.isDefined ? Object.keys(json).length > 0 : false;
         this.fields = PdfJsonFieldManager.from(json);
     }
-    getNonBlankString(name) {
-        return stringOrUndefined(this.fields.getValue(name));
+    getString(name) {
+        return this.fields.getValue(name) ?? undefined;
     }
     isChecked(key) {
         return this.fields.getChecked(key) === true;

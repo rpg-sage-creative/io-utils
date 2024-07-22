@@ -3,6 +3,7 @@ import PDFParser from "pdf2json";
 import { deleteFileSync } from "../fs/deleteFileSync.js";
 import { writeFile } from "../fs/writeFile.js";
 import { getBuffer } from "../https/getBuffer.js";
+import { PdfJsonManager } from "./PdfJsonManager.js";
 export class PdfCacher {
     url;
     id;
@@ -37,13 +38,22 @@ export class PdfCacher {
             pdfParser.loadPDF(this.cachedPdfPath);
         });
     }
+    async createManager() {
+        return new Promise((resolve, reject) => this.read()
+            .then(json => resolve(PdfJsonManager.from(json)), reject));
+    }
     removeCache() {
         return deleteFileSync(this.cachedPdfPath);
     }
     static async read(url) {
         if (url) {
-            return new PdfCacher(url).read();
+            const cacher = new PdfCacher(url);
+            return cacher.read();
         }
-        return null;
+        return undefined;
+    }
+    static async createManager(url) {
+        return new Promise((resolve, reject) => PdfCacher.read(url)
+            .then(json => resolve(PdfJsonManager.from(json)), reject));
     }
 }

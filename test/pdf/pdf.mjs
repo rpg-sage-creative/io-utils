@@ -11,10 +11,9 @@ runTests(async function test_PdfUtils() {
 	// writeFileSync("./test/mal.json", content);
 
 	const urlTwo = `file://Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/1264091676897448063.pdf`;
-	const contentTwo = await PdfCacher.read(urlTwo).catch(error);
-	const fieldsTwo = PdfJsonFieldManager.from(contentTwo);
-	const nameTwo = fieldsTwo.findValue("Character_Name");
-	const ale_1 = fieldsTwo.findChecked("Ale_1");
+	const managerTwo = PdfCacher.createManager(urlTwo).catch(error);
+	const nameTwo = managerTwo.getValue("Character_Name");
+	const ale_1 = managerTwo.isChecked("Ale_1");
 	assert(nameTwo === "Todd Campbell", `Wrong Character_Name: ${nameTwo}`);
 	assert(ale_1, `Not Checked (Ale_1): ${ale_1}`);
 	// writeFileSync("./test/todd.json", contentTwo);

@@ -5,7 +5,19 @@ import type { CheckField, Field, TextField } from "./internal/types.js";
 import type { PdfJson } from "./types.js";
 
 export class PdfJsonFieldManager {
-	public constructor(private fields: Field[]) { }
+	public initialLength: number;
+
+	public constructor(private fields: Field[]) {
+		this.initialLength = fields.length;
+	}
+
+	public get isEmpty(): boolean {
+		return this.fields.length === 0;
+	}
+
+	public get length(): number {
+		return this.fields.length;
+	}
 
 	/** Returns the given field by matching the name. */
 	public find<T extends Field>(name: string): T | undefined {
@@ -16,9 +28,9 @@ export class PdfJsonFieldManager {
 	 * Finds the given field and returns true if the field is checked.
 	 * Also removes the field from the fields array.
 	 */
-	public findChecked(name: string): boolean {
+	public findChecked(name: string, remove: boolean): boolean {
 		const field = this.find<CheckField>(name);
-		this.removeField(field);
+		if (remove) this.removeField(field);
 		return field?.checked === true;
 	}
 
@@ -26,9 +38,9 @@ export class PdfJsonFieldManager {
 	 * Finds the given field and returns the value as a non-blank string or undefined.
 	 * Also removes the field from the fields array.
 	 */
-	public findValue(name: string): string | undefined {
+	public findValue(name: string, remove: boolean): string | undefined {
 		const field = this.find<TextField>(name);
-		this.removeField(field);
+		if (remove) this.removeField(field);
 		return stringOrUndefined(field?.value);
 	}
 
@@ -42,7 +54,7 @@ export class PdfJsonFieldManager {
 		}
 	}
 
-	public static from<T extends PdfJson>(input: T): PdfJsonFieldManager {
+	public static from<U extends PdfJson>(input: Optional<U>): PdfJsonFieldManager {
 		return new PdfJsonFieldManager(collectFields(input));
 	}
 

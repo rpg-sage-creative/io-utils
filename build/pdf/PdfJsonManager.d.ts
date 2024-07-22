@@ -9,6 +9,12 @@ export declare class PdfJsonManager<T extends PdfJson = PdfJson> {
     isEmpty: boolean;
     json?: T;
     constructor(input: Optional<T | PdfJsonManager<T>>);
+    hasAllFields(...names: string[]): boolean;
+    /**
+     * Iterates through all Pages.Texts.R.T and checks for each snippetToFind using .includes.
+     * Mostly used to validate that a PDF has certain key phrases for identification/validation.
+     */
+    hasAllSnippets(...snippetsToFind: string[]): boolean;
     getString(name: string): string | undefined;
     hasField(name: string): boolean;
     isChecked(name: string): boolean;

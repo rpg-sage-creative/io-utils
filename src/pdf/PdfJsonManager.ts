@@ -19,6 +19,40 @@ export class PdfJsonManager<T extends PdfJson = PdfJson> {
 		this.fields = PdfJsonFieldManager.from(this.json);
 	}
 
+	public hasAllFields(...names: string[]): boolean {
+		return names.every(name => this.hasField(name));
+	}
+
+	/**
+	 * Iterates through all Pages.Texts.R.T and checks for each snippetToFind using .includes.
+	 * Mostly used to validate that a PDF has certain key phrases for identification/validation.
+	 */
+	public hasAllSnippets(...snippetsToFind: string[]): boolean {
+		// track which were found
+		const snippetsFound = snippetsToFind.map(_ => false);
+		// iterate pages
+		const pages = this.json?.Pages ?? [];
+		for (const page of pages) {
+			// iterate texts
+			const texts = page.Texts ?? [];
+			for (const text of texts) {
+				// grab string sections
+				const strings = text.R?.map((r: { T:string; }) => r.T) ?? [];
+				// mark found texts as found
+				snippetsToFind.forEach((t, i) => {
+					if (strings.includes(t)) {
+						snippetsFound[i] = true;
+					}
+				});
+				// return true as soon as each text is found
+				if (!snippetsFound.includes(false)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public getString(name: string): string | undefined {
 		return this.fields.getValue(name) ?? undefined;
 	}

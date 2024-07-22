@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.5",
+"version":"0.0.6",
 "branch":"main",
-"commit":"07832f111700d0d4bfa1dcb5938cfa11a90769d7",
-"commitSubject":"add and utilize isDir and isDirSync",
-"commitTs":1718691848000,
-"commitDate":"2024-06-17-2324",
-"buildTs":1718691926000,
-"buildDate":"2024-06-17-2325",
+"commit":"62b43c99b5ca33447a2d766828b9f0a905827877",
+"commitSubject":"expose Meta.Title",
+"commitTs":1721684515000,
+"commitDate":"2024-07-22-1441",
+"buildTs":1721690844000,
+"buildDate":"2024-07-22-1627",
 "author":"Randal"
 }

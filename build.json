@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.6",
+"version":"0.0.7",
 "branch":"main",
-"commit":"62b43c99b5ca33447a2d766828b9f0a905827877",
-"commitSubject":"expose Meta.Title",
-"commitTs":1721684515000,
-"commitDate":"2024-07-22-1441",
-"buildTs":1721690844000,
-"buildDate":"2024-07-22-1627",
+"commit":"eb2a9279f75e36e887da49ac11cdb1c7d25d168c",
+"commitSubject":"update and lock dependencies",
+"commitTs":1721849435000,
+"commitDate":"2024-07-24-1230",
+"buildTs":1721849458000,
+"buildDate":"2024-07-24-1230",
 "author":"Randal"
 }

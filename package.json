@@ -10,13 +10,13 @@
 		"test": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/test.sh dataRoot=\"./test\""
 	},
 	"devDependencies": {
-		"@types/follow-redirects": "^1.14.3",
-		"@types/node": "^18.19.34"
+		"@types/follow-redirects": "1.14.4",
+		"@types/node": "18.19.42"
 	},
 	"dependencies": {
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
 		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
-		"follow-redirects": "^1.15.4",
+		"follow-redirects": "1.15.6",
 		"pdf2json": "3.0.5"
 	}
 }

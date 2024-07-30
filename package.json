@@ -16,7 +16,18 @@
 	"dependencies": {
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
 		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
+		"exifreader": "4.23.3",
 		"follow-redirects": "1.15.6",
 		"pdf2json": "3.0.5"
+	},
+	"exifreader": {
+		"include": {
+			"file": true,
+			"gif": true,
+			"jpeg": true,
+			"png": true,
+			"png_file": true,
+			"webp": true
+		}
 	}
 }

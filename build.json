@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.7",
+"version":"0.0.8",
 "branch":"main",
-"commit":"eb2a9279f75e36e887da49ac11cdb1c7d25d168c",
-"commitSubject":"update and lock dependencies",
-"commitTs":1721849435000,
-"commitDate":"2024-07-24-1230",
-"buildTs":1721849458000,
-"buildDate":"2024-07-24-1230",
+"commit":"03b533a2eea029995c723cc6c635be92ef2142e6",
+"commitSubject":"add exifreader; add ImageCacher",
+"commitTs":1722380550000,
+"commitDate":"2024-07-30-1602",
+"buildTs":1722380577000,
+"buildDate":"2024-07-30-1602",
 "author":"Randal"
 }

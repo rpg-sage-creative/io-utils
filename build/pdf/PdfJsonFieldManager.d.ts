@@ -1,28 +1,49 @@
-import type { Optional } from "@rsc-utils/core-utils";
+import { type Optional } from "@rsc-utils/core-utils";
 import type { Field } from "./internal/types.js";
 import type { PdfJson } from "./types.js";
+type TransmutedField = Field & {
+    id?: string | number;
+};
+type Transmuter = (fields: Field) => TransmutedField;
 export declare class PdfJsonFieldManager {
-    fields: Field[];
+    fields: TransmutedField[];
     initialLength: number;
-    constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>);
+    constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>, transmuter?: Transmuter);
     get isEmpty(): boolean;
     get length(): number;
-    /** Returns the given field by matching the name. */
-    find<T extends Field>(name: string): T | undefined;
+    /** Returns the given field by matching the name or transmuted id. */
+    find<T extends Field>(value: Optional<string | number>): T | undefined;
+    /**
+     * Returns a string array if the field exists as a valid string.
+     * Returns null if the field is not a string.
+     * Returns undefined if not found.
+     */
+    getArray(key: Optional<string | number>, delim?: string): Optional<string[]>;
     /**
      * Finds the given field and returns true/false if the checked value is boolean.
      * Returns null if the checked value is not boolean.
      * Returns undefined if not found.
      */
-    getChecked(name: string): Optional<boolean>;
+    getChecked(key: Optional<string | number>): Optional<boolean>;
+    /**
+     * Returns a number if the field exists as string parseable as a number.
+     * Returns NaN if the field exists as a non-numeric string.
+     * Returns null if the field is not a string.
+     * Returns undefined if not found.
+     */
+    getNumber(key: Optional<string | number>): Optional<number>;
+    getNumber(key: Optional<string | number>, defValue: number): number;
     /**
      * Finds the given field and returns the value as a non-blank string.
      * Returns null if the value is not a string or empty.
      * Returns undefined if not found.
      */
-    getValue(name: string): Optional<string>;
-    has(name: string): boolean;
+    getValue(key?: Optional<string | number>): Optional<string>;
+    getValue(key: Optional<string | number>, defValue: string): string;
+    /** Returns true if the key was found, regards of whether or not it had a valid value. */
+    has(key: Optional<string | number>): boolean;
     /** Removes the field so that it cannot be reused. */
-    remove(field: Optional<Field | string>): void;
+    remove(field: Optional<Field | string | number>): void;
     static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager;
 }
+export {};

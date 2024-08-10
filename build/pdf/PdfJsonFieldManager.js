@@ -1,8 +1,9 @@
+import { isDefined } from "@rsc-utils/core-utils";
 import { collectFields } from "./internal/collectFields.js";
 export class PdfJsonFieldManager {
     fields;
     initialLength;
-    constructor(input) {
+    constructor(input, transmuter) {
         if (input) {
             if (input instanceof PdfJsonFieldManager) {
                 this.fields = input.fields.slice();
@@ -17,6 +18,9 @@ export class PdfJsonFieldManager {
         else {
             this.fields = [];
         }
+        if (transmuter) {
+            this.fields = this.fields.map(({ name, value, checked }) => transmuter({ name, value, checked }));
+        }
         this.initialLength = this.fields.length;
     }
     get isEmpty() {
@@ -25,11 +29,20 @@ export class PdfJsonFieldManager {
     get length() {
         return this.fields.length;
     }
-    find(name) {
-        return this.fields.find(field => field.name === name);
+    find(value) {
+        if (isDefined(value)) {
+            return this.fields.find(field => field.name === value || field.id === value);
+        }
+        return undefined;
     }
-    getChecked(name) {
-        const field = this.find(name);
+    getArray(key, delim = ",") {
+        const value = this.getValue(key);
+        return isDefined(value)
+            ? value.replace(/\n/g, delim).split(delim)
+            : value;
+    }
+    getChecked(key) {
+        const field = this.find(key);
         if (field) {
             if (typeof (field.checked) === "boolean") {
                 return field.checked;
@@ -38,21 +51,28 @@ export class PdfJsonFieldManager {
         }
         return undefined;
     }
-    getValue(name) {
-        const field = this.find(name);
+    getNumber(key, defValue) {
+        const sValue = this.getValue(key);
+        if (isDefined(sValue))
+            return +sValue;
+        return defValue ?? sValue;
+    }
+    getValue(key, defValue) {
+        const field = this.find(key);
         if (field) {
             if (typeof (field.value) === "string") {
-                return field.value;
+                return field.value.trim() === "" ? null : field.value;
             }
-            return null;
+            return defValue ?? null;
         }
-        return undefined;
+        return defValue ?? undefined;
     }
-    has(name) {
-        return this.find(name) !== undefined;
+    has(key) {
+        return this.find(key) !== undefined;
     }
     remove(field) {
-        if (typeof (field) === "string") {
+        const isNotField = (value) => ["number", "string"].includes(typeof (value));
+        if (isNotField(field)) {
             field = this.find(field);
         }
         if (field) {

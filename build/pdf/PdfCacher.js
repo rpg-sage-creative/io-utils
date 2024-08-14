@@ -27,15 +27,33 @@ export class PdfCacher {
         }
         return new Promise((resolve, reject) => {
             const pdfParser = new PDFParser();
-            pdfParser.on("pdfParser_dataError", async (errData) => {
+            let timer;
+            const TIMER_MS = 2000;
+            let resetCount = 0;
+            const MAX_RESETS = 5;
+            const clearTimer = () => timer ? clearTimeout(timer) : void 0;
+            const resetTimer = () => {
+                if (resetCount < MAX_RESETS) {
+                    clearTimer();
+                    timer = setTimeout(() => pdfParser.emit("pdfParser_dataError", { parserError: "TIMEOUT" }), TIMER_MS);
+                }
+            };
+            pdfParser.once("pdfParser_dataError", async (errData) => {
+                clearTimer();
                 this.removeCache();
-                reject(errData.parserError);
+                reject(errData?.parserError);
             });
-            pdfParser.on("pdfParser_dataReady", async (json) => {
+            pdfParser.once("pdfParser_dataReady", async (json) => {
+                clearTimer();
                 this.removeCache();
                 resolve(json);
             });
-            pdfParser.loadPDF(this.cachedPdfPath);
+            pdfParser.once("data", resetTimer);
+            pdfParser.once("readable", _meta => {
+                resetTimer();
+            });
+            pdfParser.loadPDF(this.cachedPdfPath).then(resetTimer);
+            resetTimer();
         });
     }
     async createManager() {

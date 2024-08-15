@@ -24,4 +24,11 @@ runTests(async function test_PdfUtils() {
 	const managerThree = new PdfJsonFieldManager(contentThree, f => ({ id:+f.name.replace(/\D/g, ""), ...f }));
 	const nameThree = managerThree.getValue(1);
 	assert(nameThree === "Character Name", `Wrong Character_Name: ${nameThree}`);
+
+	const urlFour = `file://Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/Tjut!.pdf`;
+	const contentFour = await PdfCacher.read(urlFour).catch(error);
+	assert(!!contentFour, "File (Tjut!) was NOT cached and read.");
+	const managerFour = new PdfJsonFieldManager(contentFour, f => ({ id:+f.name.replace(/\D/g, ""), ...f }));
+	const nameFour = managerFour.getValue(1);
+	assert(nameFour === "Tjut!", `Wrong Character_Name: ${nameFour}`);
 }, true);

@@ -14,6 +14,7 @@
 		"@types/node": "18.19.42"
 	},
 	"dependencies": {
+		"@aws-sdk/client-dynamodb": "^3.629.0",
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils",
 		"@rsc-utils/progress-utils": "github:rpg-sage-creative/progress-utils",
 		"exifreader": "4.23.3",

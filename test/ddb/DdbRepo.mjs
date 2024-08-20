@@ -1,30 +1,43 @@
-import { assert, error, runTests, randomSnowflake } from "@rsc-utils/core-utils";
+import { assert, info, runTests, randomSnowflake } from "@rsc-utils/core-utils";
 import { DdbRepo } from "../../build/index.js";
+
+function sortById(a, b) {
+	return a.id === b.id ? 0 : a.id < b.id ? -1 : 1;
+}
 
 runTests(async function test_DdbRepo() {
 	const ddb = await DdbRepo.for("Servers");
 
-	const id = randomSnowflake();
 	const objectType = "Server";
-	const name = `Random Server: ${id}`;
-	const server = { name, id, objectType };
 
-	const foundZero = await ddb.getById(id);
+	const idOne = randomSnowflake();
+	const serverOne = { name:`Random Server: ${idOne}`, id:idOne, objectType };
+
+	const idTwo = randomSnowflake();
+	const serverTwo = { name:`Random Server: ${idTwo}`, id:idTwo, objectType };
+
+	const foundZero = await ddb.getById(idOne);
 	assert(undefined, o => o, foundZero);
 
-	const saved = await ddb.save(server);
-	assert(true, o => o, saved);
+	const savedOne = await ddb.save(serverOne);
+	assert(true, o => o, savedOne);
 
-	const found = await ddb.getById(id);
-	assert(server, o => o, found);
+	const savedTwo = await ddb.save(serverTwo);
+	assert(true, o => o, savedTwo);
 
-	const array = await ddb.getByIds(id);
-	assert([server], o => o, array);
+	const foundOne = await ddb.getById(idOne);
+	assert(serverOne, o => o, foundOne);
 
-	const deleted = await ddb.deleteById(id);
-	assert(true, o => o, deleted);
+	const array = await ddb.getByIds(idOne, idTwo);
+	assert([serverOne, serverTwo].sort(sortById), o => o, array.sort(sortById));
 
-	const foundTwo = await ddb.getById(id);
+	const deletedOne = await ddb.deleteById(idOne);
+	assert(true, o => o, deletedOne);
+
+	const deletedTwo = await ddb.deleteById(idTwo);
+	assert(true, o => o, deletedTwo);
+
+	const foundTwo = await ddb.getById(idTwo);
 	assert(undefined, o => o, foundTwo);
 
 }, true);

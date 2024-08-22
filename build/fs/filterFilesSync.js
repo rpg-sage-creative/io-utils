@@ -1,18 +1,45 @@
 import { createExtFilter } from "./internal/createExtFilter.js";
 import { isDirSync } from "./isDirSync.js";
 import { listFilesSync } from "./listFilesSync.js";
-export function filterFilesSync(path, extOrFilter, recursive) {
+function createOptions(input, recursive) {
+    switch (typeof (input)) {
+        case "string": return { fileExt: input, recursive };
+        case "function": return { fileFilter: input, recursive };
+        default: return input;
+    }
+}
+function createFileFilter(options) {
+    if (options) {
+        const { fileExt, fileFilter } = options;
+        if (fileExt) {
+            const extFilter = createExtFilter(fileExt);
+            if (fileFilter) {
+                return (fileName, filePath) => extFilter(fileName) && fileFilter(fileName, filePath);
+            }
+            return extFilter;
+        }
+        else if (fileFilter) {
+            return fileFilter;
+        }
+    }
+    throw Error("filterFilesSync must ge given a fileExt or fileFilter");
+}
+export function filterFilesSync(path, extOrFilterOrOpts, _recursive) {
     const output = [];
-    const filter = typeof (extOrFilter) === "function" ? extOrFilter : createExtFilter(extOrFilter);
+    const options = createOptions(extOrFilterOrOpts, _recursive);
+    const filter = createFileFilter(options);
     const files = listFilesSync(path);
     for (const fileName of files) {
         const filePath = `${path}/${fileName}`;
-        const result = filter(fileName, filePath);
-        if (result) {
-            output.push(filePath);
+        if (isDirSync(filePath)) {
+            if (options.recursive) {
+                if (options.dirFilter ? options.dirFilter(fileName, filePath) : true) {
+                    output.push(...filterFilesSync(filePath, options));
+                }
+            }
         }
-        if (recursive && isDirSync(filePath)) {
-            output.push(...filterFilesSync(filePath, filter, true));
+        else if (filter(fileName, filePath)) {
+            output.push(filePath);
         }
     }
     return output;

@@ -7,6 +7,7 @@ runTests(async function test_filterFiles() {
 	const path = TEST_ROOT;
 	const files = [
 		'filterFiles.mjs',
+		'findJsonFile.mjs',
 		'isDir.mjs',
 		'listFiles.mjs',
 		'readFiles.mjs',
@@ -23,6 +24,7 @@ runTests(async function test_filterFiles() {
 		'files/jsonFileOne.json',
 		'files/jsonFileTwo.json',
 		'filterFiles.mjs',
+		'findJsonFile.mjs',
 		'isDir.mjs',
 		'listFiles.mjs',
 		'readFiles.mjs',

@@ -8,6 +8,7 @@ runTests(async function test_listFiles() {
 	const files = [
 		'files',
 		'filterFiles.mjs',
+		'findJsonFile.mjs',
 		'isDir.mjs',
 		'listFiles.mjs',
 		'readFiles.mjs',

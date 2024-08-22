@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.10",
+"version":"0.0.11",
 "branch":"main",
-"commit":"608ea25b6d68034450f1d8ead7c515fff4cdb4a6",
-"commitSubject":"add readJsonFiles; update listFiles and listFilesSync",
-"commitTs":1724285083000,
-"commitDate":"2024-08-21-1704",
-"buildTs":1724285118000,
-"buildDate":"2024-08-21-1705",
+"commit":"eed464af2497581175963cfe728e71e7e97af0ba",
+"commitSubject":"fix isUrl; remove cleanUrl",
+"commitTs":1724361571000,
+"commitDate":"2024-08-22-1419",
+"buildTs":1724361603000,
+"buildDate":"2024-08-22-1420",
 "author":"Randal"
 }

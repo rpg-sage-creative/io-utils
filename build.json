@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.0.9",
+"version":"0.0.10",
 "branch":"main",
-"commit":"88e1b437f24224f74df606876253caa1a80694ef",
-"commitSubject":"text transmuter and get",
-"commitTs":1723328403000,
-"commitDate":"2024-08-10-1520",
-"buildTs":1723328441000,
-"buildDate":"2024-08-10-1520",
+"commit":"608ea25b6d68034450f1d8ead7c515fff4cdb4a6",
+"commitSubject":"add readJsonFiles; update listFiles and listFilesSync",
+"commitTs":1724285083000,
+"commitDate":"2024-08-21-1704",
+"buildTs":1724285118000,
+"buildDate":"2024-08-21-1705",
 "author":"Randal"
 }

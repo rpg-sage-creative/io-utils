@@ -1,4 +1,4 @@
-import { error, info, stringify, verbose } from "@rsc-utils/core-utils";
+import { error, info, stringifyJson, verbose } from "@rsc-utils/core-utils";
 import { createServer } from "http";
 function errorReturn500(ex) {
     error(ex);
@@ -10,7 +10,7 @@ function errorReturn500(ex) {
 }
 function ensureOutput(output) {
     if (output === null || output === undefined) {
-        return stringify({ error: "null or undefined output" });
+        return stringifyJson({ error: "null or undefined output" });
     }
     if (Buffer.isBuffer(output)) {
         return output;
@@ -18,7 +18,7 @@ function ensureOutput(output) {
     if (typeof (output) === "string") {
         return output;
     }
-    return stringify(output);
+    return stringifyJson(output);
 }
 export class AppServer {
     name;
@@ -63,7 +63,7 @@ export class AppServer {
             }
             else {
                 res.writeHead(405, { 'Content-type': 'application/json' });
-                res.write(stringify({ error: "Method not allowed!" }));
+                res.write(stringifyJson({ error: "Method not allowed!" }));
                 res.end();
                 this.verbose(req, `res.end(405)`);
             }

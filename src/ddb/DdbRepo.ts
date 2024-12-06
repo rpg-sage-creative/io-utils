@@ -49,6 +49,12 @@ export class DdbRepo {
 		return response?.$metadata.httpStatusCode === 200;
 	}
 
+	public static async testConnection(client = DdbRepo.getClient()): Promise<boolean> {
+		const command = new ListTablesCommand({});
+		const response = await client.send(command).catch(() => undefined);
+		return response !== undefined;
+	}
+
 	protected static getClient(): DynamoDB {
 		return new DynamoDB({
 			credentials: {
@@ -65,7 +71,7 @@ export class DdbRepo {
 	public static async for(tableName: string): Promise<DdbRepo> {
 		const client = DdbRepo.getClient();
 		const command = new ListTablesCommand({});
-		const response = await client.send(command).catch(errorReturnNull);
+		const response = await client.send(command);//.catch(errorReturnNull);
 		if (!response?.TableNames?.includes(tableName)) {
 			const command = new CreateTableCommand({
 				TableName: tableName,
@@ -80,7 +86,7 @@ export class DdbRepo {
 					WriteCapacityUnits: 5
 				}
 			});
-			await client.send(command).catch(errorReturnNull);
+			await client.send(command);//.catch(errorReturnNull);
 		}
 		return new DdbRepo(tableName);
 	}

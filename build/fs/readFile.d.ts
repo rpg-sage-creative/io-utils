@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /**
  * Resolves with a buffer of the file's contents, or rejects with "Not a Buffer" or an error (if one occured).
  */

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /** An escaped URL has <> characters around it. These are generally for telling chat apps (Discord) to not load a preview. */
 export type ESCAPED_URL = string & {
     escaped_url: never;

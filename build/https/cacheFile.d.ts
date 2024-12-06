@@ -1,4 +1,4 @@
-import { type ProgressTracker } from "@rsc-utils/progress-utils";
+import { type ProgressTracker } from "@rsc-utils/core-utils";
 type Opts = {
     progressTracker?: ProgressTracker;
     logPercent?: boolean;

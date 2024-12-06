@@ -6,6 +6,7 @@ export declare class DdbRepo {
     getByIds<T>(...ids: (string | number)[]): Promise<T[]>;
     deleteById(id: string | number): Promise<boolean>;
     save<T>(value: T): Promise<boolean>;
+    static testConnection(client?: DynamoDB): Promise<boolean>;
     protected static getClient(): DynamoDB;
     /** ensures the table exists ... DEBUG / TEST ONLY */
     static for(tableName: string): Promise<DdbRepo>;

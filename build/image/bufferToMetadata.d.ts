@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { type Optional } from "@rsc-utils/core-utils";
 type ImageType = "gif" | "jpeg" | "png" | "webp";
 export type ImageMetadata = {

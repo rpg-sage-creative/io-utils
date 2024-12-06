@@ -1,4 +1,4 @@
-import { stringify, verbose } from "@rsc-utils/core-utils";
+import { stringifyJson, verbose } from "@rsc-utils/core-utils";
 import { fileExistsSync } from "../fs/fileExistsSync.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
@@ -34,7 +34,7 @@ export function getBuffer(url, postData, opts) {
         try {
             const protocol = getProtocol(url);
             const method = postData ? "request" : "get";
-            const payload = postData ? stringify(postData) : null;
+            const payload = postData ? stringifyJson(postData) : null;
             const options = payload ? {
                 headers: {
                     'Content-Type': 'application/json',

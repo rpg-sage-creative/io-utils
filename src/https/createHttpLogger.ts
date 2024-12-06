@@ -1,5 +1,4 @@
-import { error, http } from "@rsc-utils/core-utils";
-import { ProgressTracker } from "@rsc-utils/progress-utils";
+import { error, http, ProgressTracker } from "@rsc-utils/core-utils";
 
 /** @internal */
 export function createHttpLogger(label: string, total?: number, interval?: number): ProgressTracker {

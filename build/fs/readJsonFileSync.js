@@ -1,11 +1,11 @@
-import { parse } from "@rsc-utils/core-utils";
+import { parseJson } from "@rsc-utils/core-utils";
 import { readTextSync } from "./readTextSync.js";
 export function readJsonFileSync(path) {
     const json = readTextSync(path);
     let object;
     if (json !== null) {
         try {
-            object = parse(json);
+            object = parseJson(json);
         }
         catch (ex) {
             object = null;

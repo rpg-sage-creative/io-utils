@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { type IncomingMessage, type Server } from "http";
 import type { BufferHandler } from "./types.js";
 /**

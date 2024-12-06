@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { type Optional } from "@rsc-utils/core-utils";
 import { type ImageMetadata } from "./bufferToMetadata.js";
 /** Copies an image from the given url to a local file before trying to read it. */

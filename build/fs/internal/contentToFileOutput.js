@@ -1,4 +1,4 @@
-import { formattedStringify, stringify } from "@rsc-utils/core-utils";
+import { formattedStringify, stringifyJson } from "@rsc-utils/core-utils";
 export function contentToFileOutput(content, formatted) {
     if (Buffer.isBuffer(content)) {
         return content;
@@ -8,5 +8,5 @@ export function contentToFileOutput(content, formatted) {
     }
     return formatted
         ? formattedStringify(content)
-        : stringify(content);
+        : stringifyJson(content);
 }

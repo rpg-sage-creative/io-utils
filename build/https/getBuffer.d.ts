@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /**
  * You can pass in a fully formed url or leave off the protocol and allow it to prepend "https://".
  * If you pass in a url with "http://" it will downgrade to use http protocol instead of https.

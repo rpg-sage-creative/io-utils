@@ -1,4 +1,4 @@
-import { parse } from "@rsc-utils/core-utils";
+import { parseJson } from "@rsc-utils/core-utils";
 import { readText } from "./readText.js";
 
 /**
@@ -11,7 +11,7 @@ export function readJsonFile<T>(path: string): Promise<T | null> {
 		readText(path).then(json => {
 			let object: T | null | undefined;
 			try {
-				object = parse(json);
+				object = parseJson(json);
 			}catch(ex) {
 				reject(ex);
 			}

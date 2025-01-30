@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.1.0",
+"version":"0.1.1",
 "branch":"main",
-"commit":"79891a446eed065b152d2fa43b63483cd83f87bb",
-"commitSubject":"update to new core-utils and jest",
-"commitTs":1733490751000,
-"commitDate":"2024-12-06-0512",
-"buildTs":1733490783000,
-"buildDate":"2024-12-06-0513",
+"commit":"1c960be9bbb25709a698ebb5c9c3e35e9547271a",
+"commitSubject":"remove internal from publicly exposed type dependencies.",
+"commitTs":1738255238000,
+"commitDate":"2025-01-30-0840",
+"buildTs":1738255260000,
+"buildDate":"2025-01-30-0841",
 "author":"Randal"
 }

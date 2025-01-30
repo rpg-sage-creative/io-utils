@@ -1,6 +1,6 @@
 import { isDefined, type Optional } from "@rsc-utils/core-utils";
 import { collectFields } from "./internal/collectFields.js";
-import type { CheckField, Field, TextField } from "./internal/types.js";
+import type { CheckField, Field, TextField } from "./types.js";
 import type { PdfJson } from "./types.js";
 
 type TransmutedField = Field & { id?:string | number; };

@@ -1,4 +1,4 @@
-import type { CheckField, PageJson } from "./types.js";
+import type { CheckField, PageJson } from "../types.js";
 
 /**
  * @internal

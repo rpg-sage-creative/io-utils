@@ -1,5 +1,5 @@
 import { type Optional } from "@rsc-utils/core-utils";
-import type { Field } from "./internal/types.js";
+import type { Field } from "./types.js";
 import type { PdfJson } from "./types.js";
 type TransmutedField = Field & {
     id?: string | number;

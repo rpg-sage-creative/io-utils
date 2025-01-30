@@ -1,4 +1,4 @@
-import type { PageJson, TextField } from "./types.js";
+import type { PageJson, TextField } from "../types.js";
 
 /**
  * @internal

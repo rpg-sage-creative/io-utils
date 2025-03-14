@@ -1,5 +1,8 @@
-import { pause, randomSnowflake, sortByKey, toLiteral } from "@rsc-utils/core-utils";
-import { DdbRepo } from "../../build/index.js";
+import { enableLogLevels, pause, randomSnowflake, sortByKey, toLiteral } from "@rsc-utils/core-utils";
+import { readdirSync } from "fs";
+import { DdbRepo, filterFilesSync, readJsonFileSync } from "../../build/index.js";
+
+enableLogLevels("development");
 
 // let the container finish starting
 beforeAll(async () => {
@@ -12,60 +15,125 @@ beforeAll(async () => {
 	}while (!connected);
 });
 
+let dataRoot = null;
+dataRoot = "/Users/randaltmeyer/git/rsc/rpg-sage/docker-volumes/rpg-sage-mono/sage";
+function getObjectTypeFolders() {
+	if (dataRoot) {
+		// NO "dice", "messages"
+		// return ["bots", "e20", "games", "maps", "pb2e", "servers", "users"];
+		return readdirSync(dataRoot);
+	}
+	return ["servers"];
+}
+
+function readJsonFiles(path) {
+	const files = filterFilesSync(path, { fileExt:"json" });
+	if (files.length === 0) return [];
+
+	const out = [];
+
+	for (const file of files) {
+		const json = readJsonFileSync(file);
+		// contentFilter uses isDefined internally so we can safely cast as T
+		if (json) {
+			// hack various versions of the message objects
+			if (!json.id && json.messageDid) json.id = json.messageDid;
+			if (!json.id && json.discordKey?.message) json.id = json.discordKey.message;
+			out.push(json);
+		}
+	}
+
+	return out;
+}
+
+function getJsonFiles(objectTypeFolder) {
+	if (dataRoot) {
+		return readJsonFiles(`${dataRoot}/${objectTypeFolder}`);
+	}
+
+	const objectType = "Server";
+
+	const idOne = randomSnowflake();
+	const serverOne = { name:`Random Server: ${idOne}`, id:idOne, objectType };
+
+	const idTwo = randomSnowflake();
+	const serverTwo = { name:`Random Server: ${idTwo}`, id:idTwo, objectType };
+
+	return [serverOne, serverTwo];
+}
+
 describe("ddb", () => {
 	describe("DdbRepo", () => {
 
-		const objectType = "Server";
+		const objectTypeFolders = getObjectTypeFolders();
+		objectTypeFolders.forEach(objectTypeFolder => {
 
-		const idOne = randomSnowflake();
-		const serverOne = { name:`Random Server: ${idOne}`, id:idOne, objectType };
+			const jsonObjects = getJsonFiles(objectTypeFolder);
 
-		const idTwo = randomSnowflake();
-		const serverTwo = { name:`Random Server: ${idTwo}`, id:idTwo, objectType };
+			/** @type {DdbRepo} */
+			let ddb;
 
-		/** @type {DdbRepo} */
-		let ddb;
+			describe(objectTypeFolder, () => {
 
-		test(`DdbRepo.for("Servers")`, async () => {
-			ddb = await DdbRepo.for("Servers");
-			expect(ddb).toBeDefined();
-		});
+				// ensure ddb table exists
+				test(`DdbRepo.for(${toLiteral(objectTypeFolder)})`, async () => {
+					ddb = await DdbRepo.for(objectTypeFolder);
+					expect(ddb).toBeDefined();
+				});
 
-		test(`ddb.getById(${toLiteral(idOne)}) === undefined`, async () => {
-			expect(await ddb.getById(idOne)).toBeUndefined();
-		});
+				// test("drop", async () => expect(await DdbRepo.drop(objectTypeFolder)).toBe(true));
 
-		test(`ddb.save(${toLiteral(serverOne)}) === true`, async () => {
-			const saved = await ddb.save(serverOne);
-			expect(saved).toBe(true);
-		});
+				// return;
 
-		test(`ddb.save(${toLiteral(serverTwo)}) === true`, async () => {
-			expect(await ddb.save(serverTwo)).toBe(true);
-		});
+				// iterate each object (to add to ddb)
+				jsonObjects.forEach(json => {
 
-		test(`ddb.getById(${toLiteral(idOne)}) === ${toLiteral(serverOne)}`, async () => {
-			expect(await ddb.getById(idOne)).toStrictEqual(serverOne);
-		});
+					// check for object, save object, check again
+					test(json.id, async () => {
+						expect(await ddb.getById(json.id)).toBeUndefined();
+						expect(await ddb.save(json)).toBe(true);
+						expect(await ddb.getById(json.id)).toStrictEqual(json);
+					});
 
-		test(`ddb.getByIds(${toLiteral(idOne)}, ${toLiteral(idTwo)}) equals [${toLiteral(serverOne)}, ${toLiteral(serverTwo)}]`, async () => {
-			const array = await ddb.getByIds(idOne, idTwo);
-			array.sort(sortByKey("id"));
-			const expected = [serverOne, serverTwo];
-			expected.sort(sortByKey("id"));
-			expect(array).toStrictEqual(expected);
-		});
+					// alter the object and make sure it doesn't match the ddb
 
-		test(`ddb.deleteById(${toLiteral(idOne)}) === true`, async () => {
-			expect(await ddb.deleteById(idOne)).toBe(true);
-		});
+					// save the update successfully
 
-		test(`ddb.deleteById(${toLiteral(idTwo)}) === true`, async () => {
-			expect(await ddb.deleteById(idTwo)).toBe(true);
-		});
+					// refetch the update and make sure it doesn't match original but does match the updated
 
-		test(`ddb.getById(${toLiteral(idTwo)}) === undefined`, async () => {
-			expect(await ddb.getById(idTwo)).toBeUndefined();
+				});
+
+				// grab first, middle, last item ids and fetch as a group
+				if (jsonObjects.length > 3) {
+					const first = jsonObjects[0];
+					const middle = jsonObjects[Math.floor(jsonObjects.length / 2)];
+					const last = jsonObjects[jsonObjects.length - 1];
+					const objects = [first, middle, last].filter((o, i, a) => a.findIndex(_o => o.id === _o.id) === i);
+					const ids = objects.map(o => o.id);
+					const objsLabel = ids.map(id => `{id:"${id}",...}`).join(",");
+
+					test(`ddb.getByIds(...${toLiteral(ids)}) equals [${objsLabel}]`, async () => {
+						const array = await ddb.getByIds(...ids);
+						array.sort(sortByKey("id"));
+						const expected = objects.slice();
+						expected.sort(sortByKey("id"));
+						expect(array).toStrictEqual(expected);
+					});
+				}
+
+				// iterate each object (to delete from ddb)
+				jsonObjects.forEach(json => {
+
+					// ensure exists, delete, ensure deleted
+					test(`ddb.deleteById(${toLiteral(json.id)})`, async () => {
+						expect(await ddb.getById(json.id)).toStrictEqual(json);
+						expect(await ddb.deleteById(json.id)).toBe(true);
+						expect(await ddb.getById(json.id)).toBeUndefined();
+					});
+
+				});
+
+			});
 		});
 
 	});

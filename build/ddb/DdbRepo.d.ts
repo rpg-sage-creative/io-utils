@@ -10,4 +10,6 @@ export declare class DdbRepo {
     protected static getClient(): DynamoDB;
     /** ensures the table exists ... DEBUG / TEST ONLY */
     static for(tableName: string): Promise<DdbRepo>;
+    /** drops the table if it exists ... DEBUG / TEST ONLY */
+    static drop(tableName: string): Promise<boolean>;
 }

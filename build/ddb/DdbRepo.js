@@ -1,5 +1,5 @@
-import { AttributeValue, BatchGetItemCommand, CreateTableCommand, DeleteItemCommand, DynamoDB, GetItemCommand, ListTablesCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { errorReturnNull } from "@rsc-utils/core-utils";
+import { AttributeValue, BatchGetItemCommand, CreateTableCommand, DeleteItemCommand, DeleteTableCommand, DynamoDB, GetItemCommand, ListTablesCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { errorReturnUndefined } from "@rsc-utils/core-utils";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
 export class DdbRepo {
@@ -8,11 +8,14 @@ export class DdbRepo {
         this.tableName = tableName;
     }
     async getById(id) {
+        if (!id) {
+            return undefined;
+        }
         const command = new GetItemCommand({
             TableName: this.tableName,
             Key: { id: serialize(id) }
         });
-        const response = await DdbRepo.getClient().send(command).catch(errorReturnNull);
+        const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
         if (response?.Item) {
             return deserializeObject(response.Item);
         }
@@ -22,7 +25,7 @@ export class DdbRepo {
         const RequestItems = {};
         RequestItems[this.tableName] = { Keys: ids.map(id => ({ id: serialize(id) })) };
         const command = new BatchGetItemCommand({ RequestItems });
-        const response = await DdbRepo.getClient().send(command).catch(errorReturnNull);
+        const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
         if (response?.Responses) {
             return response.Responses[this.tableName].map(deserializeObject);
         }
@@ -33,7 +36,7 @@ export class DdbRepo {
             TableName: this.tableName,
             Key: { id: serialize(id) }
         });
-        const response = await DdbRepo.getClient().send(command).catch(errorReturnNull);
+        const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
         return response?.$metadata.httpStatusCode === 200;
     }
     async save(value) {
@@ -41,7 +44,7 @@ export class DdbRepo {
             TableName: this.tableName,
             Item: serialize(value).M
         });
-        const response = await DdbRepo.getClient().send(command).catch(errorReturnNull);
+        const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
         return response?.$metadata.httpStatusCode === 200;
     }
     static async testConnection(client = DdbRepo.getClient()) {
@@ -63,7 +66,9 @@ export class DdbRepo {
         const client = DdbRepo.getClient();
         const command = new ListTablesCommand({});
         const response = await client.send(command);
-        if (!response?.TableNames?.includes(tableName)) {
+        const tester = new RegExp(`^${tableName}$`, "i");
+        const exists = response?.TableNames?.some(name => tester.test(name));
+        if (!exists) {
             const command = new CreateTableCommand({
                 TableName: tableName,
                 AttributeDefinitions: [
@@ -80,5 +85,18 @@ export class DdbRepo {
             await client.send(command);
         }
         return new DdbRepo(tableName);
+    }
+    static async drop(tableName) {
+        const client = DdbRepo.getClient();
+        const command = new ListTablesCommand({});
+        const response = await client.send(command);
+        const tester = new RegExp(`^${tableName}$`, "i");
+        const TableName = response?.TableNames?.find(name => tester.test(name));
+        if (TableName) {
+            const command = new DeleteTableCommand({ TableName });
+            const response = await client.send(command);
+            return response.$metadata.httpStatusCode === 200;
+        }
+        return false;
     }
 }

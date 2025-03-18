@@ -1,6 +1,12 @@
 import { enableLogLevels, pause, randomSnowflake, sortByKey, toLiteral } from "@rsc-utils/core-utils";
 import { readdirSync } from "fs";
-import { DdbRepo, filterFilesSync, readJsonFileSync } from "../../build/index.js";
+import { DdbRepo, readJsonFilesSync } from "../../build/index.js";
+
+/*
+
+MAKE THE TABLES WITH YEAR IN THE NAME
+IDS ARE SNOWFLAKES SO I CAN GET THE YEAR AND KNOW WHICH TABLE TO QUERY
+*/
 
 enableLogLevels("development");
 
@@ -27,23 +33,13 @@ function getObjectTypeFolders() {
 }
 
 function readJsonFiles(path) {
-	const files = filterFilesSync(path, { fileExt:"json" });
-	if (files.length === 0) return [];
-
-	const out = [];
-
-	for (const file of files) {
-		const json = readJsonFileSync(file);
-		// contentFilter uses isDefined internally so we can safely cast as T
-		if (json) {
-			// hack various versions of the message objects
-			if (!json.id && json.messageDid) json.id = json.messageDid;
-			if (!json.id && json.discordKey?.message) json.id = json.discordKey.message;
-			out.push(json);
-		}
-	}
-
-	return out;
+	const all = readJsonFilesSync(path);
+	all.forEach(json => {
+		// hack various versions of the message objects
+		if (!json.id && json.messageDid) json.id = json.messageDid;
+		if (!json.id && json.discordKey?.message) json.id = json.discordKey.message;
+	});
+	return all;
 }
 
 function getJsonFiles(objectTypeFolder) {

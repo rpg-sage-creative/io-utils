@@ -1,21 +1,20 @@
 type DirFilterFn = (dirName: string, dirPath: string) => boolean;
 type FileFilterFn = (fileName: string, filePath: string) => boolean;
-type BothOptions = {
-    fileExt: string;
-    fileFilter: FileFilterFn;
-};
-type ExtOptions = {
-    fileExt: string;
-    fileFilter?: FileFilterFn;
-};
-type FilterOptions = {
-    fileExt?: string;
-    fileFilter: FileFilterFn;
-};
-type Options = {
+type DirOptions = {
     dirFilter?: DirFilterFn;
     recursive?: boolean;
-} & (BothOptions | ExtOptions | FilterOptions);
+};
+type FileOptions = {
+    fileExt: string;
+    fileFilter: FileFilterFn;
+} | {
+    fileExt: string;
+    fileFilter?: never;
+} | {
+    fileExt?: never;
+    fileFilter: FileFilterFn;
+};
+type Options = DirOptions & FileOptions;
 /**
  * @deprecated use filterFilesSync(path: string, options: Options)
  * Lists all the file paths that exist in the given path (optionally recursively) and *pass* the filter given.

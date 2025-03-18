@@ -14,6 +14,7 @@ export * from "./readJsonDb.js";
 export * from "./readJsonDbSync.js";
 export * from "./readJsonFile.js";
 export * from "./readJsonFiles.js";
+export * from "./readJsonFilesSync.js";
 export * from "./readJsonFileSync.js";
 export * from "./readText.js";
 export * from "./readTextSync.js";

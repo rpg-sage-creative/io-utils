@@ -18,7 +18,7 @@
 		"jest": "^29.7.0"
 	},
 	"dependencies": {
-		"@aws-sdk/client-dynamodb": "^3.629.0",
+		"@aws-sdk/client-dynamodb": "^3.788.0",
 		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#main",
 		"exifreader": "^4.23.3",
 		"follow-redirects": "^1.15.6",

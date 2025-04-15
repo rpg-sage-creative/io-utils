@@ -6,7 +6,7 @@ const tests = [
 	{ deserialized:"one", serialized:{S:"one"} },
 	{ deserialized:1, serialized:{N:"1"} },
 	{ deserialized:1.2, serialized:{N:"1.2"} },
-	{ deserialized:BigInt("12345678901234567890"), serialized:{S:"bigint-12345678901234567890n"} },
+	{ deserialized:BigInt("12345678901234567890"), serialized:{M:{$BIGINT$:{S:"12345678901234567890"}}} },
 	{ deserialized:{}, serialized:{M:{}} },
 	{ deserialized:{a:"A"}, serialized:{M:{a:{S:"A"}}} },
 	{ deserialized:{a:"A",b:{c:"C"}}, serialized:{M:{a:{S:"A"},b:{M:{c:{S:"C"}}}}} },

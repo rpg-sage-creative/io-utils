@@ -34,8 +34,8 @@ export function deserialize(value) {
     if ("B" in value) {
         return Buffer.from(value.B);
     }
-    if (value.S && /^bigint-\d+n$/.test(value.S)) {
-        return BigInt(value.S.slice(7, -1));
+    if (value.M?.["$BIGINT$"]?.S) {
+        return BigInt(value.M.$BIGINT$?.S);
     }
     if ("BOOL" in value) {
         return value.BOOL === true;

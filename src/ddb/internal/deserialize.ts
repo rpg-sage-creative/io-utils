@@ -10,7 +10,11 @@ function deserializeSet(value: AttributeValue.LMember) {
 /** @internal */
 export function deserializeObject<T>(value: Record<string, AttributeValue>): T {
 	return Object.keys(value).reduce((out, key) => {
-		try { out[key] = deserialize(value[key]); }catch { debug({key,value:value[key]}) }
+		try {
+			out[key] = deserialize(value[key]);
+		}catch {
+			debug({key,value:value[key]});
+		}
 		return out;
 	}, { } as any);
 }
@@ -38,8 +42,8 @@ export function deserialize(value: AttributeValue): unknown {
 		return Buffer.from(value.B!);
 	}
 
-	if (value.S && /^bigint-\d+n$/.test(value.S)) {
-		return BigInt(value.S.slice(7, -1));
+	if (value.M?.["$BIGINT$"]?.S) {
+		return BigInt(value.M.$BIGINT$?.S);
 	}
 	if ("BOOL" in value) {
 		return value.BOOL === true;

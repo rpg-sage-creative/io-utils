@@ -45,7 +45,7 @@ export function serialize(value) {
     if (Buffer.isBuffer(value))
         return { B: new Uint8Array(value) };
     switch (typeof (value)) {
-        case "bigint": return { S: `bigint-${value}n` };
+        case "bigint": return serialize({ $BIGINT$: `${value}` });
         case "boolean": return { BOOL: value };
         case "number": return { N: String(value) };
         case "string": return { S: String(value) };

@@ -39,7 +39,7 @@ function serializeArrayOrSet(value: unknown): AttributeValue | undefined {
 		}
 
 		// let's just create a custom attribute for a Set
-		return serialize({ $SET$:values })
+		return serialize({ $SET$:values });
 	}
 	return undefined;
 }
@@ -63,15 +63,16 @@ export function serialize(value: "string"): AttributeValue.SMember;
 export function serialize(value: "object"): AttributeValue.MMember;
 export function serialize(value: unknown): AttributeValue {
 	// if (value === undefined) return undefined;
-	if (value === null) return { NULL:true };
+
+	if (value === null) return { NULL:true }; // NOSONAR
 
 	const arrayOrSet = serializeArrayOrSet(value);
-	if (arrayOrSet !== undefined) return arrayOrSet;
+	if (arrayOrSet !== undefined) return arrayOrSet; // NOSONAR
 
-	if (Buffer.isBuffer(value)) return { B:new Uint8Array(value) };
+	if (Buffer.isBuffer(value)) return { B:new Uint8Array(value) }; // NOSONAR
 
 	switch(typeof(value)) {
-		case "bigint": return { S:`bigint-${value}n` };
+		case "bigint": return serialize({ $BIGINT$:`${value}` });
 		case "boolean": return { BOOL:value };
 		case "number": return { N:String(value) };
 		case "string": return { S:String(value) };

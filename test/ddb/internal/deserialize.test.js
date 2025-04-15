@@ -1,6 +1,6 @@
 import { toLiteral } from "@rsc-utils/core-utils";
-import { deserialize } from "../../build/ddb/internal/deserialize.js";
-import { getTests } from "./data.js";
+import { deserialize } from "../../../build/ddb/internal/deserialize.js";
+import { getTests } from "../data.js";
 
 describe("ddb", () => {
 	describe("deserialize", () => {

@@ -1,11 +1,10 @@
-import { enableLogLevels, pause, randomSnowflake, sortByKey, toLiteral } from "@rsc-utils/core-utils";
-import { readdirSync } from "fs";
-import { DdbRepo, readJsonFilesSync } from "../../build/index.js";
+import { enableLogLevels, pause, randomSnowflake, toLiteral } from "@rsc-utils/core-utils";
+import { DdbRepo } from "../../build/index.js";
 
 /*
 
-MAKE THE TABLES WITH YEAR IN THE NAME
-IDS ARE SNOWFLAKES SO I CAN GET THE YEAR AND KNOW WHICH TABLE TO QUERY
+400 KB max json size in DDB
+
 */
 
 enableLogLevels("development");
@@ -21,115 +20,104 @@ beforeAll(async () => {
 	}while (!connected);
 });
 
-let dataRoot = null;
-dataRoot = "/Users/randaltmeyer/git/rsc/rpg-sage/docker-volumes/rpg-sage-mono/sage";
 function getObjectTypeFolders() {
-	if (dataRoot) {
-		// NO "dice", "messages"
-		// return ["bots", "e20", "games", "maps", "pb2e", "servers", "users"];
-		return readdirSync(dataRoot);
-	}
 	return ["servers"];
 }
 
-function readJsonFiles(path) {
-	const all = readJsonFilesSync(path);
-	all.forEach(json => {
-		// hack various versions of the message objects
-		if (!json.id && json.messageDid) json.id = json.messageDid;
-		if (!json.id && json.discordKey?.message) json.id = json.discordKey.message;
-	});
-	return all;
-}
-
-function getJsonFiles(objectTypeFolder) {
-	if (dataRoot) {
-		return readJsonFiles(`${dataRoot}/${objectTypeFolder}`);
-	}
-
-	const objectType = "Server";
-
+function getJsonObjects() {
 	const idOne = randomSnowflake();
-	const serverOne = { name:`Random Server: ${idOne}`, id:idOne, objectType };
+	const serverOne = { name:`Random Server: ${idOne}`, id:idOne, objectType:"Server" };
 
 	const idTwo = randomSnowflake();
-	const serverTwo = { name:`Random Server: ${idTwo}`, id:idTwo, objectType };
+	const serverTwo = { name:`Random Server: ${idTwo}`, id:idTwo, objectType:"Server" };
 
-	return [serverOne, serverTwo];
+	const idThree = randomSnowflake();
+	const serverThree = { name:`Random Server: ${idThree}`, id:idThree, objectType:"Server" };
+
+	const idFour = randomSnowflake();
+	const botOne = { name:`Random Bot: ${idFour}`, id:idFour, objectType:"Bot" };
+
+	return [serverOne, serverTwo, serverThree, botOne];
 }
 
 describe("ddb", () => {
 	describe("DdbRepo", () => {
 
-		const objectTypeFolders = getObjectTypeFolders();
-		objectTypeFolders.forEach(objectTypeFolder => {
+		const jsonObjects = getJsonObjects();
 
-			const jsonObjects = getJsonFiles(objectTypeFolder);
+		const objectTypes = [...new Set(jsonObjects.map(({ objectType }) => objectType))];
 
-			/** @type {DdbRepo} */
-			let ddb;
+		// ensure ddb table exists
+		objectTypes.forEach(objectType => {
+			test(`DdbRepo.for(${toLiteral(objectType)})`, async () => expect(await DdbRepo.for(objectType)).toBeDefined());
+			// test(`DdbRepo.drop(${toLiteral(objectType)})`, async () => expect(await DdbRepo.drop(objectType)).toBe(true));
+		});
 
-			describe(objectTypeFolder, () => {
+		// exit out when clearing DDB tables
+		// return;
 
-				// ensure ddb table exists
-				test(`DdbRepo.for(${toLiteral(objectTypeFolder)})`, async () => {
-					ddb = await DdbRepo.for(objectTypeFolder);
-					expect(ddb).toBeDefined();
-				});
+		/** @type {DdbRepo} */
+		let ddb;
 
-				// test("drop", async () => expect(await DdbRepo.drop(objectTypeFolder)).toBe(true));
+		describe("Single Item Commands", () => {
 
-				// return;
+			// iterate each object (to add to ddb)
+			jsonObjects.forEach(json => {
 
-				// iterate each object (to add to ddb)
-				jsonObjects.forEach(json => {
+				// alter the object and make sure it doesn't match the ddb
+				const objectTypeTwo = (json.objectType ?? "None").split("").reverse().join("");
+				const clone = { ...json, objectTypeTwo };
 
-					// check for object, save object, check again
-					test(json.id, async () => {
-						expect(await ddb.getById(json.id)).toBeUndefined();
-						expect(await ddb.save(json)).toBe(true);
-						expect(await ddb.getById(json.id)).toStrictEqual(json);
-					});
+				// check for object, save object, check again
+				test(json.id, async () => {
+					ddb = await DdbRepo.for(json.objectType);
 
-					// alter the object and make sure it doesn't match the ddb
+					// initial json get/save/get
+					expect(await ddb.getById(json.id)).toBeUndefined();
+					expect(await ddb.save(json)).toBe(true);
+					expect(await ddb.getById(json.id)).toStrictEqual(json);
 
-					// save the update successfully
+					// cofirm clone id matches
+					expect(json.id).toBe(clone.id);
 
-					// refetch the update and make sure it doesn't match original but does match the updated
+					// cofirm clone object is different
+					expect(json).not.toStrictEqual(clone);
+					expect(await ddb.getById(clone.id)).not.toStrictEqual(clone);
 
-				});
+					// save the clone successfully
+					expect(await ddb.save(clone)).toBe(true);
 
-				// grab first, middle, last item ids and fetch as a group
-				if (jsonObjects.length > 3) {
-					const first = jsonObjects[0];
-					const middle = jsonObjects[Math.floor(jsonObjects.length / 2)];
-					const last = jsonObjects[jsonObjects.length - 1];
-					const objects = [first, middle, last].filter((o, i, a) => a.findIndex(_o => o.id === _o.id) === i);
-					const ids = objects.map(o => o.id);
-					const objsLabel = ids.map(id => `{id:"${id}",...}`).join(",");
+					// refetch the clone and make sure it doesn't match original
+					const fetched = await ddb.getById(json.id);
+					expect(fetched).toStrictEqual(clone);
+					expect(fetched).not.toStrictEqual(json);
 
-					test(`ddb.getByIds(...${toLiteral(ids)}) equals [${objsLabel}]`, async () => {
-						const array = await ddb.getByIds(...ids);
-						array.sort(sortByKey("id"));
-						const expected = objects.slice();
-						expected.sort(sortByKey("id"));
-						expect(array).toStrictEqual(expected);
-					});
-				}
-
-				// iterate each object (to delete from ddb)
-				jsonObjects.forEach(json => {
-
-					// ensure exists, delete, ensure deleted
-					test(`ddb.deleteById(${toLiteral(json.id)})`, async () => {
-						expect(await ddb.getById(json.id)).toStrictEqual(json);
-						expect(await ddb.deleteById(json.id)).toBe(true);
-						expect(await ddb.getById(json.id)).toBeUndefined();
-					});
-
+					expect(await ddb.deleteById(json.id)).toBe(true);
+					expect(await ddb.getById(clone.id)).toBeUndefined();
 				});
 
 			});
+
+		});
+
+		describe(`Batch Item Commands`, () => {
+
+			test(`DdbRepo.saveAll`, async () => {
+				expect(await DdbRepo.saveAll(...jsonObjects)).toBe(true);
+			});
+
+			test(`DdbRepo.getBy`, async () => {
+				// reverse list and fetch
+				const reversed = jsonObjects.slice().reverse();
+				const reversedKeys = reversed.map(({ id, objectType }) => ({ id, objectType }));
+				const fetched = await DdbRepo.getBy(...reversedKeys);
+				expect(fetched).toStrictEqual(reversed);
+			});
+
+			test(`DdbRepo.deleteAll`, async () => {
+				expect(await DdbRepo.deleteAll(...jsonObjects)).toBe(true);
+			});
+
 		});
 
 	});

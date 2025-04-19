@@ -48,7 +48,8 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 
 	public async getByIds(...ids: Optional<Id>[]): Promise<(Item | undefined)[]> {
 		const keys = ids.map(id => id ? ({ id, objectType:this.tableName }) : undefined);
-		return DdbRepo.getBy<Id>(...keys) as Promise<(Item | undefined)[]>;
+		const results = await DdbRepo.getBy<Id>(...keys);
+		return results.values as (Item | undefined)[];
 	}
 
 	public async save(value: Optional<Item>): Promise<boolean> {
@@ -84,17 +85,18 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		});
 	}
 
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<(Item | undefined)[]> {
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]) {
+		let errorCount = 0;
+
 		const values: (Item | undefined)[] = [];
 
-		// max items per get is 100
 		const { BatchGetMaxItemCount } = DdbRepo;
-		const keyBatches = partition(keys, (_id, index) => Math.floor(index / BatchGetMaxItemCount));
-		for (const keyBatch of keyBatches) {
+		const batches = partition(keys, (_, index) => Math.floor(index / BatchGetMaxItemCount));
+		for (const batch of batches) {
 
 			// make by hand to use key.objectType as table name
 			const RequestItems: BatchGetRequestItems = { };
-			keyBatch.forEach(key => {
+			batch.forEach(key => {
 				// double check we have a valid id
 				if (key?.id && key.objectType) {
 					const keyItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = { Keys:[] });
@@ -107,6 +109,7 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 			// send the request
 			const command = new BatchGetItemCommand({ RequestItems });
 			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
+			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.Responses) {
 
 				// deserialize items
@@ -116,23 +119,30 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 				}, new Map<string, (Item | undefined)[]>());
 
 				// return the items in the order in which they were requested
-				keyBatch.forEach(key => {
+				batch.forEach(key => {
 					values.push(key?.id ? batchItems.get(key.objectType)?.find(item => item?.id === key.id) : undefined);
 				});
 			}
 		}
 
-		return values;
+		const batchCount = batches.length;
+		return {
+			batchCount,
+			errorCount,
+			values
+		};
 	}
 
-	public static async deleteAll(...keys: Optional<RepoItem>[]): Promise<boolean> {
-		const keyBatches = partition(keys, (_value, index) => Math.floor(index / DdbRepo.BatchPutMaxItemCount));
+	public static async deleteAll(...keys: Optional<RepoItem>[]) {
 		let errorCount = 0;
-		let unprocessedCount = 0;
-		for (const keyBatch of keyBatches) {
+		const unprocessed: RepoItem[] = [];
+
+		const { BatchPutMaxItemCount } = DdbRepo;
+		const batches = partition(keys, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+		for (const batch of batches) {
 			const RequestItems: BatchWriteRequestItems = { };
-			keyBatch.forEach(key => {
-				// double check we have a valid id
+			batch.forEach(key => {
+				// double check we have a valid id / type
 				if (key?.id && key.objectType) {
 					const tableItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = []);
 					tableItem.push({ DeleteRequest:{ Key:{ id:serialize(key.id) } } });
@@ -145,21 +155,35 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
 			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.UnprocessedItems) {
-				const objectTypes = Object.keys(response.UnprocessedItems);
-				objectTypes.forEach(objectType => unprocessedCount += response.UnprocessedItems![objectType].length);
+				Object.keys(response.UnprocessedItems).forEach(objectType => {
+					response.UnprocessedItems?.[objectType]?.forEach(({DeleteRequest}) => {
+						const id = deserializeObject<RepoItem>(DeleteRequest?.Key!).id;
+						unprocessed.push({ id, objectType });
+					});
+				});
 			}
 		}
-		return errorCount === 0 && unprocessedCount === 0;
+
+		const unprocessedCount = unprocessed.length;
+		return {
+			batchCount: batches.length,
+			errorCount,
+			unprocessed,
+			success: errorCount === 0 && unprocessedCount === 0,
+			partial: unprocessedCount > 0 && unprocessedCount < keys.length
+		};
 	}
 
-	public static async saveAll<Item extends RepoItem>(...values: Item[]): Promise<boolean> {
-		const valueBatches = partition(values, (_value, index) => Math.floor(index / DdbRepo.BatchPutMaxItemCount));
+	public static async saveAll<Item extends RepoItem>(...values: Item[]) {
 		let errorCount = 0;
-		let unprocessedCount = 0;
-		for (const valueBatch of valueBatches) {
+		const unprocessed: Item[] = [];
+
+		const { BatchPutMaxItemCount } = DdbRepo;
+		const batches = partition(values, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+		for (const batch of batches) {
 			const RequestItems: BatchWriteRequestItems = { };
-			valueBatch.forEach(value => {
-				// double check we have a valid id
+			batch.forEach(value => {
+				// double check we have a valid id / type
 				if (value.id && value.objectType) {
 					const tableItem = RequestItems[value.objectType] ?? (RequestItems[value.objectType] = []);
 					tableItem.push({ PutRequest:{ Item:serialize(value).M! } });
@@ -172,11 +196,22 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
 			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.UnprocessedItems) {
-				const objectTypes = Object.keys(response.UnprocessedItems);
-				objectTypes.forEach(objectType => unprocessedCount += response.UnprocessedItems![objectType].length);
+				Object.keys(response.UnprocessedItems).forEach(objectType => {
+					response.UnprocessedItems?.[objectType]?.forEach(wr => {
+						unprocessed.push(deserializeObject<Item>(wr.PutRequest!.Item!));
+					});
+				});
 			}
 		}
-		return errorCount === 0 && unprocessedCount === 0;
+
+		const unprocessedCount = unprocessed.length;
+		return {
+			batchCount: batches.length,
+			errorCount,
+			unprocessed,
+			success: errorCount === 0 && unprocessedCount === 0,
+			partial: unprocessedCount > 0 && unprocessedCount < values.length
+		};
 	}
 
 	/** ensures the table exists ... DEBUG / TEST ONLY */

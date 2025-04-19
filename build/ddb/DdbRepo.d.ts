@@ -14,9 +14,25 @@ export declare class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoIte
     save(value: Optional<Item>): Promise<boolean>;
     static testConnection(client?: DynamoDB): Promise<boolean>;
     protected static getClient(): DynamoDB;
-    static getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<(Item | undefined)[]>;
-    static deleteAll(...keys: Optional<RepoItem>[]): Promise<boolean>;
-    static saveAll<Item extends RepoItem>(...values: Item[]): Promise<boolean>;
+    static getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<{
+        batchCount: number;
+        errorCount: number;
+        values: (Item | undefined)[];
+    }>;
+    static deleteAll(...keys: Optional<RepoItem>[]): Promise<{
+        batchCount: number;
+        errorCount: number;
+        unprocessed: RepoItem<`${number}`>[];
+        success: boolean;
+        partial: boolean;
+    }>;
+    static saveAll<Item extends RepoItem>(...values: Item[]): Promise<{
+        batchCount: number;
+        errorCount: number;
+        unprocessed: Item[];
+        success: boolean;
+        partial: boolean;
+    }>;
     /** ensures the table exists ... DEBUG / TEST ONLY */
     static for(tableName: string): Promise<DdbRepo>;
     /** drops the table if it exists ... DEBUG / TEST ONLY */

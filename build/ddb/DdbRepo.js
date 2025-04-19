@@ -33,7 +33,8 @@ export class DdbRepo {
     }
     async getByIds(...ids) {
         const keys = ids.map(id => id ? ({ id, objectType: this.tableName }) : undefined);
-        return DdbRepo.getBy(...keys);
+        const results = await DdbRepo.getBy(...keys);
+        return results.values;
     }
     async save(value) {
         if (value?.id) {
@@ -62,12 +63,13 @@ export class DdbRepo {
         });
     }
     static async getBy(...keys) {
+        let errorCount = 0;
         const values = [];
         const { BatchGetMaxItemCount } = DdbRepo;
-        const keyBatches = partition(keys, (_id, index) => Math.floor(index / BatchGetMaxItemCount));
-        for (const keyBatch of keyBatches) {
+        const batches = partition(keys, (_, index) => Math.floor(index / BatchGetMaxItemCount));
+        for (const batch of batches) {
             const RequestItems = {};
-            keyBatch.forEach(key => {
+            batch.forEach(key => {
                 if (key?.id && key.objectType) {
                     const keyItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = { Keys: [] });
                     keyItem.Keys.push({ id: serialize(key.id) });
@@ -78,25 +80,33 @@ export class DdbRepo {
             });
             const command = new BatchGetItemCommand({ RequestItems });
             const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
+            if (response?.$metadata.httpStatusCode !== 200)
+                errorCount++;
             if (response?.Responses) {
                 const batchItems = Object.keys(response.Responses).reduce((map, objectType) => {
                     map.set(objectType, response.Responses[objectType].map(deserializeObject));
                     return map;
                 }, new Map());
-                keyBatch.forEach(key => {
+                batch.forEach(key => {
                     values.push(key?.id ? batchItems.get(key.objectType)?.find(item => item?.id === key.id) : undefined);
                 });
             }
         }
-        return values;
+        const batchCount = batches.length;
+        return {
+            batchCount,
+            errorCount,
+            values
+        };
     }
     static async deleteAll(...keys) {
-        const keyBatches = partition(keys, (_value, index) => Math.floor(index / DdbRepo.BatchPutMaxItemCount));
         let errorCount = 0;
-        let unprocessedCount = 0;
-        for (const keyBatch of keyBatches) {
+        const unprocessed = [];
+        const { BatchPutMaxItemCount } = DdbRepo;
+        const batches = partition(keys, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+        for (const batch of batches) {
             const RequestItems = {};
-            keyBatch.forEach(key => {
+            batch.forEach(key => {
                 if (key?.id && key.objectType) {
                     const tableItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = []);
                     tableItem.push({ DeleteRequest: { Key: { id: serialize(key.id) } } });
@@ -110,19 +120,31 @@ export class DdbRepo {
             if (response?.$metadata.httpStatusCode !== 200)
                 errorCount++;
             if (response?.UnprocessedItems) {
-                const objectTypes = Object.keys(response.UnprocessedItems);
-                objectTypes.forEach(objectType => unprocessedCount += response.UnprocessedItems[objectType].length);
+                Object.keys(response.UnprocessedItems).forEach(objectType => {
+                    response.UnprocessedItems?.[objectType]?.forEach(({ DeleteRequest }) => {
+                        const id = deserializeObject(DeleteRequest?.Key).id;
+                        unprocessed.push({ id, objectType });
+                    });
+                });
             }
         }
-        return errorCount === 0 && unprocessedCount === 0;
+        const unprocessedCount = unprocessed.length;
+        return {
+            batchCount: batches.length,
+            errorCount,
+            unprocessed,
+            success: errorCount === 0 && unprocessedCount === 0,
+            partial: unprocessedCount > 0 && unprocessedCount < keys.length
+        };
     }
     static async saveAll(...values) {
-        const valueBatches = partition(values, (_value, index) => Math.floor(index / DdbRepo.BatchPutMaxItemCount));
         let errorCount = 0;
-        let unprocessedCount = 0;
-        for (const valueBatch of valueBatches) {
+        const unprocessed = [];
+        const { BatchPutMaxItemCount } = DdbRepo;
+        const batches = partition(values, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+        for (const batch of batches) {
             const RequestItems = {};
-            valueBatch.forEach(value => {
+            batch.forEach(value => {
                 if (value.id && value.objectType) {
                     const tableItem = RequestItems[value.objectType] ?? (RequestItems[value.objectType] = []);
                     tableItem.push({ PutRequest: { Item: serialize(value).M } });
@@ -136,11 +158,21 @@ export class DdbRepo {
             if (response?.$metadata.httpStatusCode !== 200)
                 errorCount++;
             if (response?.UnprocessedItems) {
-                const objectTypes = Object.keys(response.UnprocessedItems);
-                objectTypes.forEach(objectType => unprocessedCount += response.UnprocessedItems[objectType].length);
+                Object.keys(response.UnprocessedItems).forEach(objectType => {
+                    response.UnprocessedItems?.[objectType]?.forEach(wr => {
+                        unprocessed.push(deserializeObject(wr.PutRequest.Item));
+                    });
+                });
             }
         }
-        return errorCount === 0 && unprocessedCount === 0;
+        const unprocessedCount = unprocessed.length;
+        return {
+            batchCount: batches.length,
+            errorCount,
+            unprocessed,
+            success: errorCount === 0 && unprocessedCount === 0,
+            partial: unprocessedCount > 0 && unprocessedCount < values.length
+        };
     }
     static async for(tableName) {
         const client = DdbRepo.getClient();

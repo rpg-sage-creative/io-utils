@@ -8,19 +8,22 @@ describe("fs", () => {
 	const path = TEST_ROOT;
 
 	const testFiles = [
+		'fileExists.test.js',
 		'filterFiles.test.js',
 		'findJsonFile.test.js',
 		'isDir.test.js',
 		'listFiles.test.js',
 		'readFiles.test.js',
 		'readJsonFiles.test.js',
+		'symLink.test.js',
 		'writeFiles.test.js',
 	];
 
 	const files = [
 		'files',
 	]
-	.concat(testFiles);
+	.concat(testFiles)
+	.sort();
 
 	describe("listFiles", () => {
 

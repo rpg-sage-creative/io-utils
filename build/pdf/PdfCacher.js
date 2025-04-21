@@ -1,6 +1,6 @@
 import { getDataRoot, randomSnowflake } from "@rsc-utils/core-utils";
 import PDFParser from "pdf2json";
-import { deleteFileSync } from "../fs/deleteFileSync.js";
+import { deleteFile } from "../fs/deleteFile.js";
 import { writeFile } from "../fs/writeFile.js";
 import { getBuffer } from "../https/getBuffer.js";
 import { PdfJsonManager } from "./PdfJsonManager.js";
@@ -40,12 +40,12 @@ export class PdfCacher {
             };
             pdfParser.once("pdfParser_dataError", async (errData) => {
                 clearTimer();
-                this.removeCache();
+                await this.removeCache();
                 reject(errData?.parserError);
             });
             pdfParser.once("pdfParser_dataReady", async (json) => {
                 clearTimer();
-                this.removeCache();
+                await this.removeCache();
                 resolve(json);
             });
             pdfParser.once("data", resetTimer);
@@ -61,7 +61,7 @@ export class PdfCacher {
             .then(json => resolve(PdfJsonManager.from(json)), reject));
     }
     removeCache() {
-        return deleteFileSync(this.cachedPdfPath);
+        return deleteFile(this.cachedPdfPath);
     }
     static async read(url) {
         if (url) {

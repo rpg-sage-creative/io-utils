@@ -1,5 +1,5 @@
 import { getDataRoot, randomSnowflake } from "@rsc-utils/core-utils";
-import { deleteFileSync } from "../fs/deleteFileSync.js";
+import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
 import { getBuffer } from "../https/getBuffer.js";
@@ -25,18 +25,19 @@ export class ImageCacher {
         if (!cached) {
             return Promise.reject(new Error(`No Cache to read: ${this.id}`));
         }
-        return new Promise((resolve, reject) => {
-            readFile(this.cachedImagePath).then(buffer => {
-                this.removeCache();
-                resolve(buffer);
-            }, err => {
-                this.removeCache();
-                reject(err);
-            });
+        return new Promise(async (resolve, reject) => {
+            const bufferOrError = await readFile(this.cachedImagePath).catch(err => err);
+            await this.removeCache().catch(() => { });
+            if (Buffer.isBuffer(bufferOrError)) {
+                resolve(bufferOrError);
+            }
+            else {
+                reject(bufferOrError);
+            }
         });
     }
     removeCache() {
-        return deleteFileSync(this.cachedImagePath);
+        return deleteFile(this.cachedImagePath);
     }
     static async read(url) {
         if (url) {

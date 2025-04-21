@@ -1,5 +1,6 @@
 import { error } from "@rsc-utils/core-utils";
-import { mkdir, rm, symlink } from "fs";
+import { mkdir, symlink } from "fs";
+import { deleteFile } from "./deleteFile.js";
 import { toFilePath } from "./internal/toFilePath.js";
 export async function symLink(target, path, options) {
     if (options?.mkdir) {
@@ -23,7 +24,13 @@ export async function symLink(target, path, options) {
                 return;
             }
             try {
-                rm(path, { force: true }, () => symlink(target, path, "file", () => res(true)));
+                const deleted = await deleteFile(path);
+                if (deleted) {
+                    symlink(target, path, "file", () => res(true));
+                }
+                else {
+                    res(false);
+                }
             }
             catch (inner) {
                 error(inner);

@@ -1,6 +1,5 @@
-import { rm } from "fs";
-import { fileExists, readJsonFile, symLink } from "../../build/index.js";
 import { enableLogLevels } from "@rsc-utils/core-utils";
+import { deleteFile, fileExists, readJsonFile, symLink } from "../../build/index.js";
 
 enableLogLevels("development");
 
@@ -20,7 +19,7 @@ describe("fs", () => {
 			expect(await symLink(original, link, { overwrite:true })).toBe(true);
 			expect(await fileExists(link)).toBe(true);
 			expect(await readJsonFile(file)).toStrictEqual(await readJsonFile(link));
-			expect(() => new Promise(res => rm(link, { force:true }, res))).not.toThrow();
+			expect(await deleteFile(link)).toBeTruthy();
 		});
 
 	});

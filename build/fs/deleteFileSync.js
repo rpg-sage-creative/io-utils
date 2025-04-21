@@ -1,11 +1,20 @@
 import { rmSync } from "fs";
 import { fileExistsSync } from "./fileExistsSync.js";
-export function deleteFileSync(path) {
-    const before = fileExistsSync(path);
-    if (before) {
-        rmSync(path);
-        const after = fileExistsSync(path);
-        return before !== after;
+import { error } from "@rsc-utils/core-utils";
+export function deleteFileSync(path, options) {
+    if (options?.checkExists && !fileExistsSync(path)) {
+        return "NotFound";
     }
-    return false;
+    let deleted = false;
+    try {
+        rmSync(path, { force: true });
+        deleted = true;
+    }
+    catch (ex) {
+        error(ex);
+        return false;
+    }
+    return options?.checkExists
+        ? !fileExistsSync(path)
+        : deleted;
 }

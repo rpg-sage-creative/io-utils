@@ -39,7 +39,6 @@ export function deleteFileSync(path: string, options?: { checkExists?:true | "be
 
 	// check again to be sure
 	const checkAfter = checkExists === true || checkExists === "after";
-
 	if (checkAfter) {
 		return !fileExistsSync(path);
 	}

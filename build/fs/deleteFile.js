@@ -1,16 +1,30 @@
-import { errorReturnFalse } from "@rsc-utils/core-utils";
 import { rm } from "fs";
 import { fileExists } from "./fileExists.js";
-export async function deleteFile(path, options) {
-    if (options?.checkExists) {
-        const exists = await fileExists(path);
-        if (!exists)
-            return "NotFound";
-    }
-    const deleted = await new Promise(res => rm(path, { force: true }, () => res(true))).catch(errorReturnFalse);
-    if (options?.checkExists) {
-        const exists = await fileExists(path);
-        return !exists;
-    }
-    return deleted;
+export function deleteFile(path, options) {
+    return new Promise(async (resolve, reject) => {
+        const checkExists = options?.checkExists ?? false;
+        const checkBefore = checkExists === true || checkExists === "before";
+        if (checkBefore) {
+            const exists = await fileExists(path).catch(reject);
+            if (!exists) {
+                if (exists === false)
+                    resolve("NotFound");
+                return;
+            }
+        }
+        const force = options?.force ?? true;
+        const deleted = await new Promise((res, rej) => rm(path, { force }, err => err ? rej(err) : res(true))).catch(reject);
+        if (deleted !== true) {
+            return;
+        }
+        const checkAfter = checkExists === true || checkExists === "after";
+        if (checkAfter) {
+            const exists = await fileExists(path).catch(reject);
+            if (exists !== undefined) {
+                resolve(!exists);
+            }
+            return;
+        }
+        resolve(deleted);
+    });
 }

@@ -6,8 +6,8 @@ describe("fs", () => {
 		test(`deleteFileSync("made_up_path") === true`, () => {
 			expect(deleteFileSync("made_up_path")).toBe(true);
 		});
-		test(`deleteFileSync("made_up_path", { force:true }) === true`, () => {
-			expect(deleteFileSync("made_up_path", { force:true })).toBe(true);
+		test(`deleteFileSync("made_up_path", { force:false }) === true`, () => {
+			expect(() => deleteFileSync("made_up_path", { force:false })).toThrow();
 		});
 		test(`deleteFileSync("made_up_path", { checkExists:"before" }) === "NotFound"`, () => {
 			expect(deleteFileSync("made_up_path", { checkExists:"before" })).toBe("NotFound");

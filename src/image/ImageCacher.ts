@@ -9,20 +9,20 @@ import { bufferToMetadata, type ImageMetadata } from "./bufferToMetadata.js";
 export class ImageCacher {
 
 	/** The local file id. */
-	private id: Snowflake;
+	private readonly id: Snowflake;
 
 	/** The path to the local file. */
-	private cachedImagePath: string;
+	private readonly cachedImagePath: string;
 
 	/** Creates a new ImageCacher for the given url. */
-	public constructor(private url: string) {
+	public constructor(private readonly url: string) {
 		this.id = randomSnowflake();
 		this.cachedImagePath = `${getDataRoot("cache/image", true)}/${this.id}.img`;
 	}
 
 	/** Reads from the url and writes the local file. */
 	private async setCache(): Promise<boolean> {
-		const buffer = await getBuffer(this.url).catch(() => null);
+		const buffer = await getBuffer(this.url).catch(() => undefined);
 		if (buffer) {
 			return writeFile(this.cachedImagePath, buffer, true).catch(() => false);
 		}
@@ -38,7 +38,7 @@ export class ImageCacher {
 
 		return new Promise(async (resolve, reject) => {
 			const bufferOrError = await readFile(this.cachedImagePath).catch(err => err);
-			await this.removeCache().catch(() => {});
+			await this.removeCache();
 			if (Buffer.isBuffer(bufferOrError)) {
 				resolve(bufferOrError);
 			}else {
@@ -49,8 +49,8 @@ export class ImageCacher {
 	}
 
 	/** Deletes the local file. */
-	private removeCache(): Promise<boolean> {
-		return deleteFile(this.cachedImagePath);
+	private async removeCache(): Promise<boolean> {
+		return deleteFile(this.cachedImagePath).catch(() => false);
 	}
 
 	/** Convenience for new PdfCacher(url).read(); */

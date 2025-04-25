@@ -3,11 +3,11 @@ import { PdfJsonManager } from "./PdfJsonManager.js";
 import type { PdfJson } from "./types.js";
 /** Copies a pdf from the given url to a local file before trying to read it. */
 export declare class PdfCacher {
-    private url;
+    private readonly url;
     /** The local file id. */
-    private id;
+    private readonly id;
     /** The path to the local file. */
-    private cachedPdfPath;
+    private readonly cachedPdfPath;
     /** Creates a new PdfCacher for the given url. */
     constructor(url: string);
     /** Reads from the url and writes the local file. */

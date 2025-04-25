@@ -14,7 +14,7 @@ export class ImageCacher {
         this.cachedImagePath = `${getDataRoot("cache/image", true)}/${this.id}.img`;
     }
     async setCache() {
-        const buffer = await getBuffer(this.url).catch(() => null);
+        const buffer = await getBuffer(this.url).catch(() => undefined);
         if (buffer) {
             return writeFile(this.cachedImagePath, buffer, true).catch(() => false);
         }
@@ -27,7 +27,7 @@ export class ImageCacher {
         }
         return new Promise(async (resolve, reject) => {
             const bufferOrError = await readFile(this.cachedImagePath).catch(err => err);
-            await this.removeCache().catch(() => { });
+            await this.removeCache();
             if (Buffer.isBuffer(bufferOrError)) {
                 resolve(bufferOrError);
             }
@@ -36,8 +36,8 @@ export class ImageCacher {
             }
         });
     }
-    removeCache() {
-        return deleteFile(this.cachedImagePath);
+    async removeCache() {
+        return deleteFile(this.cachedImagePath).catch(() => false);
     }
     static async read(url) {
         if (url) {

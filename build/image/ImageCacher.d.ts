@@ -2,11 +2,11 @@ import { type Optional } from "@rsc-utils/core-utils";
 import { type ImageMetadata } from "./bufferToMetadata.js";
 /** Copies an image from the given url to a local file before trying to read it. */
 export declare class ImageCacher {
-    private url;
+    private readonly url;
     /** The local file id. */
-    private id;
+    private readonly id;
     /** The path to the local file. */
-    private cachedImagePath;
+    private readonly cachedImagePath;
     /** Creates a new ImageCacher for the given url. */
     constructor(url: string);
     /** Reads from the url and writes the local file. */

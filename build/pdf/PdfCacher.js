@@ -14,7 +14,7 @@ export class PdfCacher {
         this.cachedPdfPath = `${getDataRoot("cache/pdf", true)}/${this.id}.pdf`;
     }
     async setCache() {
-        const buffer = await getBuffer(this.url).catch(() => null);
+        const buffer = await getBuffer(this.url).catch(() => undefined);
         if (buffer) {
             return writeFile(this.cachedPdfPath, buffer, true).catch(() => false);
         }
@@ -60,8 +60,8 @@ export class PdfCacher {
         return new Promise((resolve, reject) => this.read()
             .then(json => resolve(PdfJsonManager.from(json)), reject));
     }
-    removeCache() {
-        return deleteFile(this.cachedPdfPath);
+    async removeCache() {
+        return deleteFile(this.cachedPdfPath).catch(() => false);
     }
     static async read(url) {
         if (url) {

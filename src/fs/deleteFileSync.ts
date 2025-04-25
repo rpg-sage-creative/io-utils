@@ -1,33 +1,49 @@
 import { rmSync } from "fs";
 import { fileExistsSync } from "./fileExistsSync.js";
-import { error } from "@rsc-utils/core-utils";
 
 /**
- * Returns true if the file didn't exist or rmSync didn't throw errors.
- * Returns false if an error was thrown.
+ * Convenience wrapper for fs.rmSync(path, { force }) that resolves to boolean.
+ * Resolves true if rmSync completes successfully.
+ * Resolves false if no errors were thrown and rmSync didn't complete successfully.
+ * Errors are not captured and expected to be handled.
  */
-export function deleteFileSync(path: string): boolean;
+export function deleteFileSync(path: string, options?: { force?:boolean; }): boolean;
 
 /**
- * Returns "NotFound" if the file didn't exist (counts as truthy for if the file was deleted).
- * Returns true if the file existed *and* was deleted.
- * Returns false if the file wasn't deleted.
+ * Convenience wrapper for fs.rmSync(path, { force }) that resolves to truthy/falsey.
+ * Resolves "NotFound" if the file is checked before deleting and didn't exist (counts as truthy for if the file was deleted).
+ * Resolves true if rmSync completes successfully and it isn't checked after or it is checked after and not found.
+ * Returns false if rmSync completes successfully and the file is checked after and still exists.
+ * Errors are not captured and expected to be handled.
  */
-export function deleteFileSync(path: string, options: { checkExists:true; }): "NotFound" | boolean;
+export function deleteFileSync(path: string, options: { checkExists:true; force?:boolean; }): "NotFound" | boolean;
 
-export function deleteFileSync(path: string, options?: { checkExists:true; }): "NotFound" | boolean {
-	if (options?.checkExists && !fileExistsSync(path)) {
-		return "NotFound";
+export function deleteFileSync(path: string, options?: { checkExists?:true | "before" | "after"; force?:boolean; }): "NotFound" | boolean {
+	const checkExists = options?.checkExists ?? false;
+
+	const checkBefore = checkExists === true || checkExists === "before";
+	if (checkBefore) {
+		const exists = fileExistsSync(path);
+
+		// no file means exit early
+		if (!exists) {
+			return "NotFound";
+		}
 	}
-	let deleted = false;
-	try {
-		rmSync(path, { force:true });
-		deleted = true;
-	}catch(ex) {
-		error(ex);
-		return false;
+
+	// allow force to be passed in, default to true
+	const force = options?.force ?? true;
+
+	// attempt to delete
+	rmSync(path, { force });
+
+	// check again to be sure
+	const checkAfter = checkExists === true || checkExists === "after";
+
+	if (checkAfter) {
+		return !fileExistsSync(path);
 	}
-	return options?.checkExists
-		? !fileExistsSync(path)
-		: deleted;
+
+	// assume all went well
+	return true;
 }

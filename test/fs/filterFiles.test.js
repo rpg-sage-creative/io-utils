@@ -6,12 +6,17 @@ describe("fs", () => {
 	const path = "./test/fs";
 
 	const testFiles = [
+		'deleteFile.test.js',
+		'deleteFileSync.test.js',
+		'fileExists.test.js',
 		'filterFiles.test.js',
 		'findJsonFile.test.js',
 		'isDir.test.js',
 		'listFiles.test.js',
 		'readFiles.test.js',
 		'readJsonFiles.test.js',
+		'symLink.test.js',
+		'symLinkSync.test.js',
 		'writeFiles.test.js',
 	].map(f => `${path}/${f}`);
 
@@ -22,7 +27,8 @@ describe("fs", () => {
 		'files/jsonFileTwo.json',
 	]
 	.map(f => `${path}/${f}`)
-	.concat(testFiles);
+	.concat(testFiles)
+	.sort();
 
 	const recursiveJsonFiles = recursiveFiles.filter(s => s.endsWith("json"));
 

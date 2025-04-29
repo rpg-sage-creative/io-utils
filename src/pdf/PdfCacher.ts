@@ -25,7 +25,7 @@ export class PdfCacher {
 	private async setCache(): Promise<boolean> {
 		const buffer = await getBuffer(this.url).catch(() => undefined);
 		if (buffer) {
-			return writeFile(this.cachedPdfPath, buffer, true).catch(() => false);
+			return writeFile(this.cachedPdfPath, buffer, { makeDir:true }).catch(() => false);
 		}
 		return false;
 	}

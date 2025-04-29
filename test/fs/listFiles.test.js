@@ -8,6 +8,8 @@ describe("fs", () => {
 	const path = TEST_ROOT;
 
 	const testFiles = [
+		'deleteFile.test.js',
+		'deleteFileSync.test.js',
 		'fileExists.test.js',
 		'filterFiles.test.js',
 		'findJsonFile.test.js',
@@ -16,6 +18,7 @@ describe("fs", () => {
 		'readFiles.test.js',
 		'readJsonFiles.test.js',
 		'symLink.test.js',
+		'symLinkSync.test.js',
 		'writeFiles.test.js',
 	];
 

@@ -1,22 +1,14 @@
-import { error } from "@rsc-utils/core-utils";
 import { writeFileSync as fsWriteFileSync, mkdirSync } from "fs";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
 import { toFilePath } from "./internal/toFilePath.js";
 
 /** Writes the given content to the given file path/name, optionally building the path if it doesn't exist, optionally formatting JSON output. */
-export function writeFileSync<T>(filePathAndName: string, content: T, makeDir?: boolean, formatted?: boolean): boolean {
-	try {
-		if (makeDir) {
-			mkdirSync(toFilePath(filePathAndName), { recursive:true });
-		}
-	} catch(ex) {
-		error(ex);
+export function writeFileSync<T>(filePathAndName: string, content: T, options?: { makeDir?:boolean; formatted?:boolean; }): boolean {
+	if (options?.makeDir) {
+		mkdirSync(toFilePath(filePathAndName), { recursive:true });
 	}
-	try {
-		fsWriteFileSync(filePathAndName, contentToFileOutput(content, formatted));
-	} catch(ex) {
-		error(ex);
-		return false;
-	}
+
+	fsWriteFileSync(filePathAndName, contentToFileOutput(content, options?.formatted));
+
 	return true;
 }

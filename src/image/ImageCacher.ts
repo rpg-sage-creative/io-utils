@@ -24,7 +24,7 @@ export class ImageCacher {
 	private async setCache(): Promise<boolean> {
 		const buffer = await getBuffer(this.url).catch(() => undefined);
 		if (buffer) {
-			return writeFile(this.cachedImagePath, buffer, true).catch(() => false);
+			return writeFile(this.cachedImagePath, buffer, { makeDir:true }).catch(() => false);
 		}
 		return false;
 	}

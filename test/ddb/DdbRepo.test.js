@@ -31,7 +31,22 @@ function getJsonObjects() {
 		jsonObjects.push({ name:`Random User: ${userId}`, id:userId, objectType:"ddb-test-user" });
 
 		const botId = randomSnowflake();
-		jsonObjects.push({ name:`Random Bot: ${botId}`, id:botId, objectType:"ddb-test-bot" });
+		jsonObjects.push({
+			name: `Random Bot: ${botId}`,
+			id: botId,
+			objectType: "ddb-test-bot",
+
+			// throw in some other values for funsies
+			bigintValue: 1234567890n,
+			trueValue: true,
+			falseValue: true,
+			dateValue: new Date(),
+			emptyStringValue: "",
+			nullValue: null,
+			numberValue: 1234567890,
+			stringValue: "non-empty string",
+			zeroValue: 0,
+		});
 	}
 
 	return jsonObjects;
@@ -82,10 +97,10 @@ describe("ddb", () => {
 					const objectTypeTwo = (json.objectType ?? "None").split("").reverse().join("");
 					const clone = { ...json, objectTypeTwo };
 
-					// cofirm clone id matches
+					// confirm clone id matches
 					expect(json.id).toBe(clone.id);
 
-					// cofirm clone object is different
+					// confirm clone object is different
 					expect(json).not.toStrictEqual(clone);
 					expect(await ddb.getById(clone.id)).not.toStrictEqual(clone);
 

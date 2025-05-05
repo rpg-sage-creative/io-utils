@@ -1,3 +1,4 @@
+import { isDate } from "util/types";
 function serializeArrayOrSet(value) {
     if (Array.isArray(value)) {
         return { L: value.map(serialize) };
@@ -44,8 +45,11 @@ export function serialize(value) {
         return arrayOrSet;
     if (Buffer.isBuffer(value))
         return { B: new Uint8Array(value) };
+    if (isDate(value)) {
+        return serialize({ $date: value.toISOString() });
+    }
     switch (typeof (value)) {
-        case "bigint": return serialize({ $BIGINT$: `${value}` });
+        case "bigint": return serialize({ $bigint: value.toString() });
         case "boolean": return { BOOL: value };
         case "number": return { N: String(value) };
         case "string": return { S: String(value) };

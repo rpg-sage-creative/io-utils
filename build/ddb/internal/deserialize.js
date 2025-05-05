@@ -34,11 +34,14 @@ export function deserialize(value) {
     if ("B" in value) {
         return Buffer.from(value.B);
     }
-    if (value.M?.["$BIGINT$"]?.S) {
-        return BigInt(value.M.$BIGINT$?.S);
+    if (value.M?.["$bigint"]?.S) {
+        return BigInt(value.M.$bigint?.S);
     }
     if ("BOOL" in value) {
         return value.BOOL === true;
+    }
+    if (value.M?.["$date"]?.S) {
+        return new Date(value.M.$date?.S);
     }
     if ("N" in value) {
         return +value.N;

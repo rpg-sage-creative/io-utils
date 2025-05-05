@@ -1,3 +1,5 @@
+const testDate = new Date();
+const testBigInt = BigInt("12345678901234567890");
 const tests = [
 	{ deserialized:null, serialized:{NULL:true} },
 	{ deserialized:true, serialized:{BOOL:true} },
@@ -6,7 +8,8 @@ const tests = [
 	{ deserialized:"one", serialized:{S:"one"} },
 	{ deserialized:1, serialized:{N:"1"} },
 	{ deserialized:1.2, serialized:{N:"1.2"} },
-	{ deserialized:BigInt("12345678901234567890"), serialized:{M:{$BIGINT$:{S:"12345678901234567890"}}} },
+	{ deserialized:testDate, serialized:{M:{$date:{S:testDate.toISOString()}}} },
+	{ deserialized:testBigInt, serialized:{M:{$bigint:{S:testBigInt.toString()}}} },
 	{ deserialized:{}, serialized:{M:{}} },
 	{ deserialized:{a:"A"}, serialized:{M:{a:{S:"A"}}} },
 	{ deserialized:{a:"A",b:{c:"C"}}, serialized:{M:{a:{S:"A"},b:{M:{c:{S:"C"}}}}} },

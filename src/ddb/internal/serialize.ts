@@ -1,4 +1,5 @@
 import type { AttributeValue } from "@aws-sdk/client-dynamodb";
+import { isDate } from "util/types";
 
 /** attempts to serialize array and sets. returns undefined if the value is neither */
 function serializeArrayOrSet(value: unknown): AttributeValue | undefined {
@@ -71,8 +72,12 @@ export function serialize(value: unknown): AttributeValue {
 
 	if (Buffer.isBuffer(value)) return { B:new Uint8Array(value) }; // NOSONAR
 
+	if (isDate(value)) {
+		return serialize({ $date:value.toISOString() });
+	}
+
 	switch(typeof(value)) {
-		case "bigint": return serialize({ $BIGINT$:`${value}` });
+		case "bigint": return serialize({ $bigint:value.toString() });
 		case "boolean": return { BOOL:value };
 		case "number": return { N:String(value) };
 		case "string": return { S:String(value) };

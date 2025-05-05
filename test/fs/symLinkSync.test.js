@@ -11,7 +11,7 @@ describe("fs", () => {
 		const dir = `${TEST_ROOT}/files`;
 		const file = `${dir}/jsonFile.json`;
 		const original = `./jsonFile.json`
-		const link = `${dir}/jsonFile.link.json`;
+		const link = `${dir}/jsonFile.link-sync.json`;
 
 		test(`link ${file} as ${link}`, () => {
 			expect(fileExistsSync(file)).toBe(true);

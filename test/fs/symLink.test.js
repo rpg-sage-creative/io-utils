@@ -1,4 +1,4 @@
-import { enableLogLevels } from "@rsc-utils/core-utils";
+import { enableLogLevels, tagLiterals } from "@rsc-utils/core-utils";
 import { deleteFile, fileExists, readJsonFile, symLink } from "../../build/index.js";
 
 enableLogLevels("development");
@@ -13,7 +13,7 @@ describe("fs", () => {
 		const original = `./jsonFile.json`
 		const link = `${dir}/jsonFile.link.json`;
 
-		test(`link ${file} as ${link}`, async() => {
+		test(tagLiterals`link ${file} as ${link}`, async() => {
 			expect(await fileExists(file)).toBe(true);
 			expect(await fileExists(link)).toBe(false);
 			expect(await symLink(original, link, { overwrite:true })).toBe(true);

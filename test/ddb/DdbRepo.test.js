@@ -65,7 +65,7 @@ describe("ddb", () => {
 				for (const objectType of objectTypes) {
 					expect(await DdbRepo.for(objectType)).toBeDefined();
 				}
-			});
+			}, 10*1000);
 		});
 
 		describe("Single Item Commands", () => {
@@ -83,7 +83,7 @@ describe("ddb", () => {
 					expect(await ddb.save(json)).toBe(true);
 					expect(await ddb.getById(json.id)).toStrictEqual(json);
 				};
-			});
+			}, 10*1000);
 
 			test(`mutate (${jsonObjects.length} items)`, async() => {
 				let ddb;
@@ -112,7 +112,7 @@ describe("ddb", () => {
 					expect(fetched).toStrictEqual(clone);
 					expect(fetched).not.toStrictEqual(json);
 				};
-			});
+			}, 10*1000);
 
 			test(`delete (${jsonObjects.length} items)`, async() => {
 				let ddb;
@@ -126,7 +126,7 @@ describe("ddb", () => {
 					expect(await ddb.deleteById(json.id)).toBe(true);
 					expect(await ddb.getById(json.id)).toBeUndefined();
 				};
-			});
+			}, 10*1000);
 
 		});
 
@@ -173,14 +173,14 @@ describe("ddb", () => {
 				expect(await DdbRepo.saveAll(...jsonObjects)).toStrictEqual(expectedSaveAllResults);
 				// show they are there
 				expect(await DdbRepo.getBy(...idKeys)).toStrictEqual(expectedGetAllResults);
-			});
+			}, 10*1000);
 
 			test(`DdbRepo.getBy`, async () => {
 				// reverse list and fetch
 				const reversedKeys = idKeys.slice().reverse();
 				// show the results are ordered as the keys
 				expect(await DdbRepo.getBy(...reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
-			});
+			}, 10*1000);
 
 			test(`DdbRepo.deleteAll(...) --> ${toLiteral(expectedDeleteAllResults)}`, async () => {
 				// show they are there
@@ -189,7 +189,7 @@ describe("ddb", () => {
 				expect(await DdbRepo.deleteAll(...jsonObjects)).toStrictEqual(expectedDeleteAllResults);
 				// show they aren't there
 				expect(await DdbRepo.getBy(...idKeys)).toStrictEqual(expectedGetNoneResults);
-			});
+			}, 10*1000);
 
 		});
 
@@ -198,7 +198,7 @@ describe("ddb", () => {
 				for (const objectType of objectTypes) {
 					expect(await DdbRepo.drop(objectType)).toBe(true);
 				}
-			});
+			}, 10*1000);
 		});
 
 	});

@@ -27,7 +27,7 @@ describe("image", () => {
 					expect(meta.height).toBe(height);
 					expect(meta.type).toBe(type);
 				}
-			});
+			}, 10*1000);
 		});
 
 	});

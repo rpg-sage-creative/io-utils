@@ -13,19 +13,10 @@ function withResolvers(input, parserOptions) {
         pipe?.destroy();
         pipe = undefined;
     };
-    const res = (value) => {
-        destroy();
-        resolve(value);
-    };
-    const rej = (err) => {
-        destroy();
-        reject(err);
-    };
-    pipe = stream
-        .pipe(parser)
-        .once("error", rej)
-        .once("close", res);
-    return { pipe, promise, resolve: res, reject: rej };
+    const _resolve = (value) => { destroy(); resolve(value); };
+    const _reject = (err) => { destroy(); reject(err); };
+    pipe = stream.pipe(parser).once("error", _reject).once("close", _resolve);
+    return { pipe, promise, resolve: _resolve, reject: _reject };
 }
 async function detectSeparator(input) {
     const { pipe, promise, resolve } = withResolvers(input);
@@ -34,8 +25,9 @@ async function detectSeparator(input) {
             return resolve(",");
         if (headers.length === 1) {
             const match = /([^\w "])/.exec(headers[0]);
-            if (match)
+            if (match) {
                 return resolve(match[0]);
+            }
         }
         return resolve(undefined);
     });
@@ -47,17 +39,12 @@ export async function parseDsv(input, opts) {
     }
     let parserOptions = opts ? typeof (opts) === "string" ? { separator: opts } : opts : {};
     if (!parserOptions?.separator) {
-        const separator = await detectSeparator(input);
-        if (separator) {
-            if (!parserOptions)
-                parserOptions = {};
-            parserOptions.separator = separator;
-        }
+        parserOptions.separator = await detectSeparator(input);
     }
-    const { pipe, promise } = withResolvers(input, parserOptions);
     const keys = [];
     const items = [];
     const delimiter = parserOptions.separator ?? ",";
+    const { pipe, promise } = withResolvers(input, parserOptions);
     pipe.on("headers", (headers) => keys.push(...headers));
     pipe.on("data", (data) => items.push(data));
     await promise;

@@ -1,6 +1,6 @@
 {
 	"name": "@rsc-utils/io-utils",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"license": "LGPL-3.0-or-later",
 	"main": "build/index.js",
 	"type": "module",

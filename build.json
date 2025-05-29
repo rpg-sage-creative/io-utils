@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.2.2",
+"version":"0.2.3",
 "branch":"main",
-"commit":"5fd0212aec5781e63e9a25a08cb6cbfeff23837f",
-"commitSubject":"update comment to notify of newline -> delim logic",
-"commitTs":1748555525000,
-"commitDate":"2025-05-29-1452",
-"buildTs":1748555542000,
-"buildDate":"2025-05-29-1452",
+"commit":"e9d6fe6af74ebd71e11b2b53b48432db2a1f96ba",
+"commitSubject":"update to core-utils v0.5.0",
+"commitTs":1748561914000,
+"commitDate":"2025-05-29-1638",
+"buildTs":1748562082000,
+"buildDate":"2025-05-29-1641",
 "author":"Randal"
 }

@@ -15,6 +15,7 @@ export declare class PdfJsonFieldManager {
     find<T extends Field>(value: Optional<string | number>): T | undefined;
     /**
      * Returns a string array if the field exists as a valid string.
+     * NewLine characters are treated as the delimiter.
      * Returns null if the field is not a string.
      * Returns undefined if not found.
      */

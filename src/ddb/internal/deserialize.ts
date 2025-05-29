@@ -28,8 +28,8 @@ export function deserialize(value: AttributeValue): unknown {
 	if ("L" in value) {
 		return value.L?.map(deserialize);
 	}
-	if (value.M?.["$SET$"]) {
-		return deserializeSet(value.M.$SET$ as AttributeValue.LMember);
+	if (value.M?.["$set"]) {
+		return deserializeSet(value.M.$set as AttributeValue.LMember);
 	}
 	if ("NS" in value) {
 		return new Set(value.NS!.map(Number));

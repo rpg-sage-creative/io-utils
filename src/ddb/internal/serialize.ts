@@ -40,7 +40,7 @@ function serializeArrayOrSet(value: unknown): AttributeValue | undefined {
 		}
 
 		// let's just create a custom attribute for a Set
-		return serialize({ $SET$:values });
+		return serialize({ $set:values });
 	}
 	return undefined;
 }

@@ -27,7 +27,7 @@ function serializeArrayOrSet(value) {
         if (types.n && !types.s && !types.o) {
             return { NS: values.map(String) };
         }
-        return serialize({ $SET$: values });
+        return serialize({ $set: values });
     }
     return undefined;
 }

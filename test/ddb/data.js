@@ -18,7 +18,7 @@ const tests = [
 	{ deserialized:["",0,{a:"A"}], serialized:{L:[{S:""},{N:"0"},{M:{a:{S:"A"}}}]} },
 	{ deserialized:new Set(["a","b","c"]), serialized:{SS:["a","b","c"]} },
 	{ deserialized:new Set([1,2,3]), serialized:{NS:["1","2","3"]} },
-	{ deserialized:new Set([1,"2"]), serialized:{M:{$SET$:{L:[{N:"1"},{S:"2"}]}}} },
+	{ deserialized:new Set([1,"2"]), serialized:{M:{$set:{L:[{N:"1"},{S:"2"}]}}} },
 ];
 
 export function getTests(which) {

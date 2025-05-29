@@ -22,8 +22,8 @@ export function deserialize(value) {
     if ("L" in value) {
         return value.L?.map(deserialize);
     }
-    if (value.M?.["$SET$"]) {
-        return deserializeSet(value.M.$SET$);
+    if (value.M?.["$set"]) {
+        return deserializeSet(value.M.$set);
     }
     if ("NS" in value) {
         return new Set(value.NS.map(Number));

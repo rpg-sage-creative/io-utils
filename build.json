@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.2.1",
+"version":"0.2.2",
 "branch":"main",
-"commit":"2d1cda0b287e2863150ac8776e188768347a5571",
-"commitSubject":"update set serialization to match bigint/date convention; which also matches core-utils json parsing",
-"commitTs":1748553694000,
-"commitDate":"2025-05-29-1421",
-"buildTs":1748553716000,
-"buildDate":"2025-05-29-1421",
+"commit":"5fd0212aec5781e63e9a25a08cb6cbfeff23837f",
+"commitSubject":"update comment to notify of newline -> delim logic",
+"commitTs":1748555525000,
+"commitDate":"2025-05-29-1452",
+"buildTs":1748555542000,
+"buildDate":"2025-05-29-1452",
 "author":"Randal"
 }

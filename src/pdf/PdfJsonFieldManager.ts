@@ -48,6 +48,7 @@ export class PdfJsonFieldManager {
 
 	/**
 	 * Returns a string array if the field exists as a valid string.
+	 * NewLine characters are treated as the delimiter.
 	 * Returns null if the field is not a string.
 	 * Returns undefined if not found.
 	 */

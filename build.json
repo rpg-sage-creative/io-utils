@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.2.0",
+"version":"0.2.1",
 "branch":"main",
-"commit":"95b34e4a2a8bf749937f9cb0b65f926f2bde46c2",
-"commitSubject":"specify core-utils tag in dependency",
-"commitTs":1748552381000,
-"commitDate":"2025-05-29-1359",
-"buildTs":1748552402000,
-"buildDate":"2025-05-29-1400",
+"commit":"2d1cda0b287e2863150ac8776e188768347a5571",
+"commitSubject":"update set serialization to match bigint/date convention; which also matches core-utils json parsing",
+"commitTs":1748553694000,
+"commitDate":"2025-05-29-1421",
+"buildTs":1748553716000,
+"buildDate":"2025-05-29-1421",
 "author":"Randal"
 }

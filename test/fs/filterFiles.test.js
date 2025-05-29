@@ -1,4 +1,4 @@
-import { toLiteral } from "@rsc-utils/core-utils";
+import { tagLiterals } from "@rsc-utils/core-utils";
 import { filterFiles, filterFilesSync } from "../../build/index.js";
 
 describe("fs", () => {
@@ -34,14 +34,14 @@ describe("fs", () => {
 
 	const tests = [
 		{ path, options:{ fileExt:"test.js" }, files:testFiles },
-		{ path, options:{ fileFilter:f => f !== "out", recursive:true }, files:recursiveFiles },
+		{ path, options:{ dirFilter:f => f !== "out", fileFilter:f => f, recursive:true }, files:recursiveFiles },
 		{ path, options:{ fileExt:"json", recursive:true }, files:recursiveJsonFiles },
 	];
 
 	describe("filterFiles", () => {
 
 		tests.forEach(({ path, options, files }) => {
-			test(`filterFiles(${toLiteral(path)}, ${toLiteral(options)})`, async () => {
+			test(tagLiterals`filterFiles(${path}, ${options})`, async () => {
 				expect(await filterFiles(path, options)).toStrictEqual(files);
 			});
 		});
@@ -51,7 +51,7 @@ describe("fs", () => {
 	describe("filterFilesSync", () => {
 
 		tests.forEach(({ path, options, files }) => {
-			test(`filterFilesSync(${toLiteral(path)}, ${toLiteral(options)})`, () => {
+			test(tagLiterals`filterFilesSync(${path}, ${options})`, () => {
 				expect(filterFilesSync(path, options)).toStrictEqual(files);
 			});
 		});

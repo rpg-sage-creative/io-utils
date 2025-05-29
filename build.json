@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.1.1",
+"version":"0.2.0",
 "branch":"main",
-"commit":"1c960be9bbb25709a698ebb5c9c3e35e9547271a",
-"commitSubject":"remove internal from publicly exposed type dependencies.",
-"commitTs":1738255238000,
-"commitDate":"2025-01-30-0840",
-"buildTs":1738255260000,
-"buildDate":"2025-01-30-0841",
+"commit":"95b34e4a2a8bf749937f9cb0b65f926f2bde46c2",
+"commitSubject":"specify core-utils tag in dependency",
+"commitTs":1748552381000,
+"commitDate":"2025-05-29-1359",
+"buildTs":1748552402000,
+"buildDate":"2025-05-29-1400",
 "author":"Randal"
 }

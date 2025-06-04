@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.3.0",
+"version":"0.3.1",
 "branch":"main",
-"commit":"7b16a46dcd7d8616ce1e7c7d495bc06f182475f0",
-"commitSubject":"add getUrlRegex from core-utils; update isUrl",
-"commitTs":1748625944000,
-"commitDate":"2025-05-30-1025",
-"buildTs":1748625964000,
-"buildDate":"2025-05-30-1026",
+"commit":"71f28f7a23049d4ae89d48a8dbf041d7f7d5ddc3",
+"commitSubject":"update to latest core-utils",
+"commitTs":1749066336000,
+"commitDate":"2025-06-04-1245",
+"buildTs":1749066372000,
+"buildDate":"2025-06-04-1246",
 "author":"Randal"
 }

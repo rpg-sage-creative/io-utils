@@ -4,13 +4,13 @@ import type { CheckField, Field, TextField } from "./types.js";
 import type { PdfJson } from "./types.js";
 
 type TransmutedField = Field & { id?:string | number; };
-type Transmuter = (fields: Field) => TransmutedField;
+export type PdfJsonFieldTransmuter = (fields: Field) => TransmutedField;
 
 export class PdfJsonFieldManager {
 	public fields: TransmutedField[];
 	public initialLength: number;
 
-	public constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>, transmuter?: Transmuter) {
+	public constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>, transmuter?: PdfJsonFieldTransmuter) {
 		if (input) {
 			if (input instanceof PdfJsonFieldManager) {
 				this.fields = input.fields.slice();
@@ -126,8 +126,8 @@ export class PdfJsonFieldManager {
 		}
 	}
 
-	public static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager {
-		return new PdfJsonFieldManager(input);
+	public static from<U extends PdfJson | Field[], V extends PdfJsonFieldManager>(input: Optional<U | V>, transmuter?: PdfJsonFieldTransmuter): PdfJsonFieldManager {
+		return new PdfJsonFieldManager(input, transmuter);
 	}
 
 }

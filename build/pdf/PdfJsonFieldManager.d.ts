@@ -4,11 +4,11 @@ import type { PdfJson } from "./types.js";
 type TransmutedField = Field & {
     id?: string | number;
 };
-type Transmuter = (fields: Field) => TransmutedField;
+export type PdfJsonFieldTransmuter = (fields: Field) => TransmutedField;
 export declare class PdfJsonFieldManager {
     fields: TransmutedField[];
     initialLength: number;
-    constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>, transmuter?: Transmuter);
+    constructor(input: Optional<PdfJson | PdfJsonFieldManager | Field[]>, transmuter?: PdfJsonFieldTransmuter);
     get isEmpty(): boolean;
     get length(): number;
     /** Returns the given field by matching the name or transmuted id. */
@@ -45,6 +45,6 @@ export declare class PdfJsonFieldManager {
     has(key: Optional<string | number>): boolean;
     /** Removes the field so that it cannot be reused. */
     remove(field: Optional<Field | string | number>): void;
-    static from<U extends PdfJson, V extends PdfJsonFieldManager>(input: Optional<U | V>): PdfJsonFieldManager;
+    static from<U extends PdfJson | Field[], V extends PdfJsonFieldManager>(input: Optional<U | V>, transmuter?: PdfJsonFieldTransmuter): PdfJsonFieldManager;
 }
 export {};

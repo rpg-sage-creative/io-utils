@@ -1,5 +1,5 @@
-import { error } from "@rsc-utils/core-utils";
-import { PdfCacher, PdfJsonFieldManager } from "../../build/index.js";
+import { error, tagLiterals } from "@rsc-utils/core-utils";
+import { PdfCacher, PdfJsonFieldManager, PdfJsonManager, writeFileSync } from "../../build/index.js";
 
 beforeAll(() => {
 	process.env.dataRoot = "./test";
@@ -8,14 +8,39 @@ beforeAll(() => {
 describe("pdf", () => {
 	describe("PdfCacher", () => {
 
-		test(`https://pf2.rpgsage.io/pathbuilder-2e-mal-level-4.pdf`, async () => {
-			const urlOne = "https://pf2.rpgsage.io/pathbuilder-2e-mal-level-4.pdf";
-			const contentOne = await PdfCacher.read(urlOne).catch(error);
-			expect(contentOne).toBeDefined();
-			const managerOne = PdfJsonFieldManager.from(contentOne);
-			const nameOne = managerOne.getValue("CharacterName");
-			expect(nameOne).toBe("Malken'throp (Mal)");
-			// writeFileSync("./test/pdf/out/mal.json", contentOne);
+		const tests = [
+			{ url:"https://pf2.rpgsage.io/pathbuilder-2e-mal-level-4.pdf", values:[{ key:"CharacterName",value:"Malken'throp (Mal)"}] },
+			{ url:"file:///Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/BudMastercraft.pdf", values:[{ key:"text_1wgcm", value:"Character Name" }] },
+		];
+
+		tests.forEach(({ url, values }, index) => {
+			const testFields = fieldManager => {
+				values.forEach(({ key, value }) => {
+					expect(fieldManager.getValue(key)).toBe(value);
+				});
+			};
+
+			describe(url, () => {
+
+				test(tagLiterals`await PdfCacher.read(${url}).catch(error)`, async () => {
+					const content = await PdfCacher.read(url).catch(error);
+					expect(content).toBeDefined();
+					const jsonManager = PdfJsonManager.from(content);
+					expect(jsonManager).toBeDefined();
+					expect(jsonManager.hasAllSnippets("Hit%20Points")).toBe(true);
+					const fieldManager = jsonManager.fields;
+					testFields(fieldManager);
+					// writeFileSync(`./test/pdf/out/read-${index}.json`, content, { formatted:true, makeDir:true });
+				});
+
+				test(tagLiterals`await PdfCacher.readFields(${url}).catch(error)`, async () => {
+					const fieldManager = await PdfCacher.readFields(url).catch(error);
+					expect(fieldManager).toBeDefined();
+					testFields(fieldManager);
+					// writeFileSync(`./test/pdf/out/readFields-${index}.json`, fieldManager.fields, { formatted:true, makeDir:true });
+				});
+
+			});
 		});
 
 	});

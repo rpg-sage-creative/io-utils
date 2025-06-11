@@ -82,7 +82,7 @@ export class PdfJsonFieldManager {
             }
         }
     }
-    static from(input) {
-        return new PdfJsonFieldManager(input);
+    static from(input, transmuter) {
+        return new PdfJsonFieldManager(input, transmuter);
     }
 }

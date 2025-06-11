@@ -131,7 +131,10 @@ export class PdfCacher {
         return undefined;
     }
     static async createManager(url) {
-        return new Promise((resolve, reject) => PdfCacher.read(url)
-            .then(json => resolve(PdfJsonManager.from(json)), reject));
+        if (!url)
+            return undefined;
+        const { promise, resolve, reject } = Promise.withResolvers();
+        PdfCacher.read(url).then(json => resolve(PdfJsonManager.from(json)), reject);
+        return promise;
     }
 }

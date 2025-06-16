@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.3.3",
+"version":"0.3.4",
 "branch":"main",
-"commit":"ddef0d7e811982eaabe7678c1d71321800a9de73",
-"commitSubject":"fix botched build/test/checkin",
-"commitTs":1749667566000,
-"commitDate":"2025-06-11-1146",
-"buildTs":1749667585000,
-"buildDate":"2025-06-11-1146",
+"commit":"f0cc987e66d6c560b554ff837464669cab9be72d",
+"commitSubject":"update comment/signature",
+"commitTs":1750115226000,
+"commitDate":"2025-06-16-1607",
+"buildTs":1750115244000,
+"buildDate":"2025-06-16-1607",
 "author":"Randal"
 }

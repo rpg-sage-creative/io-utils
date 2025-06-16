@@ -1,4 +1,4 @@
-import { formattedStringify, stringifyJson } from "@rsc-utils/core-utils";
+import { stringifyJson } from "@rsc-utils/core-utils";
 export function contentToFileOutput(content, formatted) {
     if (Buffer.isBuffer(content)) {
         return content;
@@ -6,7 +6,11 @@ export function contentToFileOutput(content, formatted) {
     if (typeof (content) === "string") {
         return content;
     }
-    return formatted
-        ? formattedStringify(content)
-        : stringifyJson(content);
+    let space;
+    let maxLineLength;
+    if (formatted) {
+        space = "\t";
+        maxLineLength = 250;
+    }
+    return stringifyJson(content, null, space, maxLineLength);
 }

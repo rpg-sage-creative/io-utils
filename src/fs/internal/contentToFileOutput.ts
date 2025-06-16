@@ -1,4 +1,4 @@
-import { formattedStringify, stringifyJson } from "@rsc-utils/core-utils";
+import { stringifyJson } from "@rsc-utils/core-utils";
 
 /**
  * @internal
@@ -9,10 +9,17 @@ export function contentToFileOutput<T>(content: T, formatted?: boolean): string 
 	if (Buffer.isBuffer(content)) {
 		return content;
 	}
+
 	if (typeof(content) === "string") {
 		return content;
 	}
-	return formatted
-		? formattedStringify(content)
-		: stringifyJson(content);
+
+	let space: "\t" | undefined;
+	let maxLineLength: number | undefined;
+	if (formatted) {
+		space = "\t";
+		maxLineLength = 250;
+	}
+
+	return stringifyJson(content, null, space, maxLineLength);
 }

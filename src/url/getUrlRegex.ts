@@ -5,6 +5,7 @@ import type { WrapOptions } from "./types.js";
 type CreateOptions = RegExpFlagOptions;
 type GetOptions = RegExpFlagOptions & RegExpAnchorOptions & RegExpCaptureOptions & WrapOptions;
 
+/** @todo have a serious think about wether or not iFlag is optional on a url ... */
 function createUrlRegex(options?: CreateOptions): RegExp {
 	const { gFlag = "", iFlag = "" } = options ?? {};
 	const flags = gFlag + iFlag;

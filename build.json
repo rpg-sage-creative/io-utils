@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.3.7",
+"version":"0.3.8",
 "branch":"main",
-"commit":"fc708b552f457b3d2dbf911a397413cf54aef5ac",
-"commitSubject":"update core-utils dependency",
-"commitTs":1753142936000,
-"commitDate":"2025-07-21-1708",
-"buildTs":1753142990000,
-"buildDate":"2025-07-21-1709",
+"commit":"ee7f604a3bc59307b3910a6cf525482b436fb031",
+"commitSubject":"update core-utils",
+"commitTs":1754524100000,
+"commitDate":"2025-08-06-1648",
+"buildTs":1754524121000,
+"buildDate":"2025-08-06-1648",
 "author":"Randal"
 }

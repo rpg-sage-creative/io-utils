@@ -114,7 +114,7 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 
 				// deserialize items
 				const batchItems = Object.keys(response.Responses).reduce((map, objectType) => {
-					map.set(objectType, response.Responses![objectType].map(deserializeObject) as Item[]);
+					map.set(objectType, response.Responses![objectType]!.map(deserializeObject) as Item[]);
 					return map;
 				}, new Map<string, (Item | undefined)[]>());
 

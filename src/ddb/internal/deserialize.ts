@@ -11,7 +11,7 @@ function deserializeSet(value: AttributeValue.LMember) {
 export function deserializeObject<T>(value: Record<string, AttributeValue>): T {
 	return Object.keys(value).reduce((out, key) => {
 		try {
-			out[key] = deserialize(value[key]);
+			out[key] = deserialize(value[key]!);
 		}catch {
 			debug({key,value:value[key]});
 		}

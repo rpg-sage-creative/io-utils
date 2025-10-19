@@ -39,7 +39,7 @@ function getJsonObjects() {
 			// throw in some other values for funsies
 			bigintValue: 1234567890n,
 			trueValue: true,
-			falseValue: true,
+			falseValue: false,
 			dateValue: new Date(),
 			emptyStringValue: "",
 			nullValue: null,

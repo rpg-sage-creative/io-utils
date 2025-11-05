@@ -1,4 +1,6 @@
 import { stringifyJson, verbose, type ProgressTracker } from "@rsc-utils/core-utils";
+import { pipeline } from "node:stream";
+import { createGunzip } from "node:zlib";
 import { fileExistsSync } from "../fs/fileExistsSync.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
@@ -50,10 +52,11 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 			const protocol = getProtocol(url);
 			const method = postData ? "request" : "get";
 			const payload = postData ? stringifyJson(postData) : null;
-					const options = payload ? {
+			const options = payload ? {
 				headers: {
-					'Content-Type': 'application/json',
-					'Content-Length': payload.length,
+					"Content-Type": "application/json",
+					"Content-Length": payload.length,
+					"Accept-Encoding": "gzip",
 				},
 				method: "POST"
 			} : { };
@@ -67,14 +70,18 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 
 			const req = protocol[method](url, options, response => {
 				try {
-					const chunks: Buffer[] = [];
-					response.on("data", (chunk: Buffer) => {
-						pTracker?.increment(chunk.byteLength);
-						chunks.push(chunk);
+					const rChunks: Buffer[] = [];
+					const stream = response.headers["content-encoding"] === "gzip"
+						? pipeline(response, createGunzip(), err => err ? reject(err) : void(0))
+						: response;
+					stream.once("close", reject);
+					stream.on("data", (rChunk: Buffer) => {
+						pTracker?.increment(rChunk.byteLength);
+						rChunks.push(rChunk);
 					});
-					response.once("close", reject);
-					response.once("end", () => resolve(Buffer.concat(chunks)));
-					response.once("error", reject);
+					stream.once("end", () => resolve(Buffer.concat(rChunks)));
+					stream.once("error", reject);
+
 				}catch(ex) {
 					reject(ex);
 				}

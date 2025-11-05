@@ -85,7 +85,8 @@ export function filterFilesSync(path: string, extOrFilterOrOpts: string | FileFi
 			if (options.recursive) {
 				// process if no dirFilter or if dirFilter returns truthy
 				if (options.dirFilter ? options.dirFilter(fileName, filePath) : true) {
-					output.push(...filterFilesSync(filePath, options));
+					const children = filterFilesSync(filePath, options);
+					children.forEach(child => output.push(child));
 				}
 			}
 

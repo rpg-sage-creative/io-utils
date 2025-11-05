@@ -8,8 +8,11 @@ export function collectFields(json: Optional<PdfJson>): Field[] {
 	const fields: Field[] = [];
 	const pages = json?.Pages ?? [];
 	pages.forEach(page => {
-		fields.push(...collectTextFields(page));
-		fields.push(...collectCheckFields(page));
+		const textFields = collectTextFields(page);
+		textFields.forEach(field => fields.push(field));
+
+		const checkFields = collectCheckFields(page);
+		checkFields.forEach(field => fields.push(field));
 	});
 	return fields;
 }

@@ -97,7 +97,7 @@ export async function parseDsv<T extends StringRecord>(input: ParserInput, opts?
 
 	// writeup pipe
 	const { pipe, promise } = withResolvers<T[]>(input, parserOptions);
-	pipe.on("headers", (headers: string[]) => keys.push(...headers));
+	pipe.on("headers", (headers: string[]) => headers.forEach(key => keys.push(key)));
 	pipe.on("data", (data: T) => items.push(data));
 
 	// await processing

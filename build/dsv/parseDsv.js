@@ -45,7 +45,7 @@ export async function parseDsv(input, opts) {
     const items = [];
     const delimiter = parserOptions.separator ?? ",";
     const { pipe, promise } = withResolvers(input, parserOptions);
-    pipe.on("headers", (headers) => keys.push(...headers));
+    pipe.on("headers", (headers) => headers.forEach(key => keys.push(key)));
     pipe.on("data", (data) => items.push(data));
     await promise;
     if (keys.length <= 1)

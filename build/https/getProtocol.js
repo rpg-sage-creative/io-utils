@@ -1,4 +1,5 @@
 import followRedirects from "follow-redirects";
+const HttpUrlRegExp = /^http:\/\//i;
 export function getProtocol(url) {
-    return (/^http:\/\//i).test(url) ? followRedirects.http : followRedirects.https;
+    return HttpUrlRegExp.test(url) ? followRedirects.http : followRedirects.https;
 }

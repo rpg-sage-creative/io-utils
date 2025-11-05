@@ -34,7 +34,8 @@ export function filterFilesSync(path, extOrFilterOrOpts, _recursive) {
         if (isDirSync(filePath)) {
             if (options.recursive) {
                 if (options.dirFilter ? options.dirFilter(fileName, filePath) : true) {
-                    output.push(...filterFilesSync(filePath, options));
+                    const children = filterFilesSync(filePath, options);
+                    children.forEach(child => output.push(child));
                 }
             }
         }

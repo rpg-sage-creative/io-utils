@@ -86,7 +86,8 @@ export async function filterFiles(path: string, extOrFilterOrOpts: string | File
 			if (options.recursive) {
 				// process if no dirFilter or if dirFilter returns truthy
 				if (options.dirFilter ? await options.dirFilter(fileName, filePath) : true) {
-					output.push(...(await filterFiles(filePath, options)));
+					const children = await filterFiles(filePath, options);
+					children.forEach(child => output.push(child));
 				}
 			}
 

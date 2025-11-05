@@ -34,7 +34,8 @@ export async function filterFiles(path, extOrFilterOrOpts, _recursive) {
         if (await isDir(filePath)) {
             if (options.recursive) {
                 if (options.dirFilter ? await options.dirFilter(fileName, filePath) : true) {
-                    output.push(...(await filterFiles(filePath, options)));
+                    const children = await filterFiles(filePath, options);
+                    children.forEach(child => output.push(child));
                 }
             }
         }

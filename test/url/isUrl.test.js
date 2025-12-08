@@ -7,7 +7,7 @@ describe("url", () => {
 	const wrapNonOptional = { wrapChars:"<>" };
 
 	const goodUnwrappedUrls = [
-		"http://google.com/q?word=text#marked",
+		"http://gooGle.com/q?word=text#marked",
 		"https://google.com:80/q?word=text#marked",
 		"ftp://google.com:80/q?word=text#marked",
 		"sftp://google.com:80/q?word=text#marked",

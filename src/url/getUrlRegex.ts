@@ -5,49 +5,117 @@ import type { WrapOptions } from "./types.js";
 type CreateOptions = RegExpFlagOptions;
 type GetOptions = RegExpFlagOptions & RegExpAnchorOptions & RegExpCaptureOptions & WrapOptions;
 
+const IPv4RegExp = regex`
+(
+	(\g<octet>\.){3}\g<octet>
+)
+
+(?(DEFINE)
+	(?<octet>
+		# 250 - 255
+		25[0-5]
+
+		|
+
+		(
+			# 20x - 24x
+			2[0-4]
+			|
+
+			# 1xx
+			1\d
+			|
+
+			# xx
+			[1-9]
+			|
+		)
+		\d # trailing x for the above OR block
+	)
+)
+`;
+
+const IPv6RegExp = regex`
+(
+	# full address
+	(\g<hex>:){7}\g<hex>
+
+	|
+	# :: suffix
+	(\g<hex>:){1,7}:
+	|
+
+	# :: prefix
+	:(:\g<hex>){1,7}
+	|
+
+	# compressed variations
+	(\g<hex>:){1,6}:\g<hex>
+	|
+	(\g<hex>:){1,5}(:\g<hex>){1,2}
+	|
+	(\g<hex>:){1,4}(:\g<hex>){1,3}
+	|
+	(\g<hex>:){1,3}(:\g<hex>){1,4}
+	|
+	(\g<hex>:){1,2}(:\g<hex>){1,5}
+	|
+	\g<hex>:(:\g<hex>){1,6}
+)
+
+(?(DEFINE)
+	(?<hex> [0-9A-Fa-f]{1,4} )
+)
+`;
+
+export const UrlRegExp = regex("i")`
+	# protocol
+	(s?ftp|https?)://
+
+	# auth
+	(\S+(:\S*)?@)?
+
+	# hostname
+	(
+		# first sub can have - or underscore, but cannot end in one
+		(([0-9a-z\u00a1-\uffff][\-_]*)*[0-9a-z\u00a1-\uffff]+\.)
+
+		# domain can have dashes, but cannot end in one
+		(([0-9a-z\u00a1-\uffff]-*)*[0-9a-z\u00a1-\uffff]+\.)*
+
+		# alpha only tld
+		([a-z\u00a1-\uffff]{2,})
+
+		|
+		# ipv4
+		${IPv4RegExp}
+
+		|
+		# ipv6
+		${IPv6RegExp}
+
+		|
+		localhost
+	)
+
+	# port
+	(:\d{2,5})?
+
+	# path
+	(/[%.~+\-\w]*)*
+
+	# querystring
+	(\?[;&=%.~+\-\w]*)?
+
+	# anchor
+	(\#[\-\w]*)?
+`;
+
+export const UrlRegExpG = new RegExp(UrlRegExp, "g");
+
 /** @todo have a serious think about wether or not iFlag is optional on a url ... */
 function createUrlRegex(options?: CreateOptions): RegExp {
-	const { gFlag = "", iFlag = "" } = options ?? {};
-	const flags = gFlag + iFlag;
-
-	return regex(flags)`
-		# protocol
-		(s?ftp|https?)://
-
-		# auth
-		(\S+(:\S*)?@)?
-
-		# hostname
-		(
-			# first sub can have - or underscore, but cannot end in one
-			(([0-9a-z\u00a1-\uffff][\-_]*)*[0-9a-z\u00a1-\uffff]+\.)
-
-			# domain can have dashes, but cannot end in one
-			(([0-9a-z\u00a1-\uffff]-*)*[0-9a-z\u00a1-\uffff]+\.)*
-
-			# alpha only tld
-			([a-z\u00a1-\uffff]{2,})
-
-			|
-			# ipv4
-			(\d{1,3}\.){3}\d{1,3}
-
-			|
-			localhost
-		)
-
-		# port
-		(:\d{2,5})?
-
-		# path
-		(/[%.~+\-\w]*)*
-
-		# querystring
-		(\?[;&=%.~+\-\w]*)?
-
-		# anchor
-		(\#[\-\w]*)?
-	`;
+	return options?.gFlag ? UrlRegExpG : UrlRegExp;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { AttributeValue, BatchGetItemCommand, BatchWriteItemCommand, CreateTableCommand, DeleteItemCommand, DeleteTableCommand, DynamoDB, GetItemCommand, ListTablesCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { BatchGetItemCommand, BatchWriteItemCommand, CreateTableCommand, DeleteItemCommand, DeleteTableCommand, DynamoDB, GetItemCommand, ListTablesCommand, PutItemCommand, type AttributeValue } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, partition, toLiteral, warn, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";

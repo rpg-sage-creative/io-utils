@@ -1,4 +1,4 @@
-import { readdir } from "fs";
+import { readdir } from "node:fs";
 import { createExtFilter } from "./internal/createExtFilter.js";
 
 /**

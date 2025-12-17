@@ -55,7 +55,7 @@ export class PdfJsonFieldManager {
 	public getArray(key: Optional<string | number>, delim = ","): Optional<string[]> {
 		const value = this.getValue(key);
 		return isDefined(value)
-			? value.replace(/\n/g, delim).split(delim)
+			? value.replaceAll("\n", delim).split(delim)
 			: value;
 	}
 

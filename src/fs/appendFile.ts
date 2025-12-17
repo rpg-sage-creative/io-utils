@@ -1,4 +1,4 @@
-import { appendFile as fsAppendFile } from "fs";
+import { appendFile as fsAppendFile } from "node:fs";
 
 /** Convenience wrapper for fs.appendFile(filePath, data) that resolves to boolean. */
 export function appendFile(filePath: string, data: string | Buffer): Promise<boolean> {

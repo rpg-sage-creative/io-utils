@@ -38,7 +38,7 @@ export class PdfJsonFieldManager {
     getArray(key, delim = ",") {
         const value = this.getValue(key);
         return isDefined(value)
-            ? value.replace(/\n/g, delim).split(delim)
+            ? value.replaceAll("\n", delim).split(delim)
             : value;
     }
     getChecked(key) {

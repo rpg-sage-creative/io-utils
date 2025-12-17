@@ -1,4 +1,4 @@
-import { stat, Stats } from "fs";
+import { stat, Stats } from "node:fs";
 
 export function isDir(filePath: string): Promise<boolean> {
 	return new Promise((resolve, reject) => {

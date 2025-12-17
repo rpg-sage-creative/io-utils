@@ -1,5 +1,5 @@
 import { error } from "@rsc-utils/core-utils";
-import { symlink } from "fs";
+import { symlink } from "node:fs";
 import { deleteFile } from "./deleteFile.js";
 import { toFilePath } from "./internal/toFilePath.js";
 import { makeDir } from "./makeDir.js";

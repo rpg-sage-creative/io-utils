@@ -1,4 +1,4 @@
-import { readFile as fsReadFile } from "fs";
+import { readFile as fsReadFile } from "node:fs";
 export function readFile(path) {
     return new Promise((resolve, reject) => {
         fsReadFile(path, null, (error, buffer) => {

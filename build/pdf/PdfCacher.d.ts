@@ -15,7 +15,7 @@ export declare class PdfCacher {
     private setCache;
     /** Reads the local file and returns the JSON returned by PDFParser. */
     read<T>(): Promise<T>;
-    /** Reads the local file and returns the JSON returned by PDFParser. */
+    /** Reads the local file and returns the Fields returned by PDFParser. */
     readFields(): Promise<Field[]>;
     /** Convenience for: PdfJsonManager.from(await this.read()) */
     createManager<T extends PdfJson>(): Promise<PdfJsonManager<T>>;

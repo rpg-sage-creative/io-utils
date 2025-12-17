@@ -1,4 +1,4 @@
-import { rm } from "fs";
+import { rm } from "node:fs";
 import { fileExists } from "./fileExists.js";
 export function deleteFile(path, options) {
     return new Promise(async (resolve, reject) => {

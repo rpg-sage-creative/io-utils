@@ -1,5 +1,5 @@
 type Options = {
-    mkdir?: boolean;
+    makeDir?: boolean;
     overwrite?: boolean;
 };
 export declare function symLinkSync(original: string, link: string): boolean;

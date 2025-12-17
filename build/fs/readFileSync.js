@@ -1,4 +1,4 @@
-import { readFileSync as fsReadFileSync } from "fs";
+import { readFileSync as fsReadFileSync } from "node:fs";
 import { fileExistsSync } from "./fileExistsSync.js";
 export function readFileSync(path) {
     if (fileExistsSync(path)) {

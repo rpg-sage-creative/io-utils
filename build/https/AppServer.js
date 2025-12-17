@@ -1,4 +1,4 @@
-import { error, info, stringifyJson, verbose } from "@rsc-utils/core-utils";
+import { captureProcessExit, error, info, stringifyJson, verbose } from "@rsc-utils/core-utils";
 import { createServer } from "http";
 function errorReturn500(ex) {
     error(ex);
@@ -22,10 +22,10 @@ function ensureOutput(output) {
 }
 export class AppServer {
     name;
-    handler;
-    constructor(name, handler) {
+    handlers;
+    constructor(name, handlers) {
         this.name = name;
-        this.handler = handler;
+        this.handlers = handlers;
     }
     log(level, ...args) {
         const req = args.find(arg => typeof (arg) !== "string");
@@ -55,20 +55,34 @@ export class AppServer {
                 req.once("end", (async () => {
                     this.verbose(req, `once("end")`);
                     const buffer = Buffer.concat(chunks);
-                    const handlerResponse = await this.handler(buffer).catch(errorReturn500);
-                    res.writeHead(handlerResponse.statusCode, { 'Content-type': handlerResponse.contentType });
-                    res.end(ensureOutput(handlerResponse.body));
-                    this.verbose(req, `once("end").res.end(${handlerResponse.statusCode})`);
+                    if (this.handlers?.bufferHandler) {
+                        const handlerResponse = await this.handlers.bufferHandler(buffer).catch(errorReturn500);
+                        res.writeHead(handlerResponse.statusCode, { "Content-Type": handlerResponse.contentType });
+                        res.end(ensureOutput(handlerResponse.body));
+                        this.verbose(req, `once("end").res.end(${handlerResponse.statusCode})`);
+                    }
+                    else {
+                        res.end();
+                        this.verbose(req, `once("end").res.end()`);
+                    }
                 }));
             }
             else {
-                res.writeHead(405, { 'Content-type': 'application/json' });
+                res.writeHead(405, { "Content-Type": "application/json" });
                 res.write(stringifyJson({ error: "Method not allowed!" }));
                 res.end();
                 this.verbose(req, `res.end(405)`);
             }
         });
+        this.handlers?.createdHandler?.(this);
         return this;
+    }
+    destroy() {
+        this.handlers?.destroyHandler?.(this);
+        this.server?.closeAllConnections();
+        this.server?.removeAllListeners();
+        delete this.handlers;
+        delete this.server;
     }
     port;
     listen(port) {
@@ -79,9 +93,12 @@ export class AppServer {
         this.port = port;
         this.server?.listen(port);
         this.log("info", `listen(${port})`);
+        this.handlers?.startHandler?.(this);
+        captureProcessExit(this);
         return this;
     }
-    static start(name, port, handler) {
-        return new AppServer(name, handler).listen(port);
+    static start(name, port, arg) {
+        const handlers = typeof (arg) === "function" ? { bufferHandler: arg } : arg;
+        return new AppServer(name, handlers).listen(port);
     }
 }

@@ -1,9 +1,9 @@
-import { appendFileSync, mkdirSync, writeFileSync } from "fs";
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { fileExistsSync } from "./fileExistsSync.js";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
 import { toFilePath } from "./internal/toFilePath.js";
-export function appendJsonDbSync(filePathAndName, content, makeDir) {
-    if (makeDir) {
+export function appendJsonDbSync(filePathAndName, content, options) {
+    if (options?.makeDir) {
         mkdirSync(toFilePath(filePathAndName), { recursive: true });
     }
     const exists = fileExistsSync(filePathAndName);

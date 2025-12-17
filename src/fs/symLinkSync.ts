@@ -1,14 +1,14 @@
 import { error } from "@rsc-utils/core-utils";
-import { mkdirSync, rmSync, symlinkSync } from "fs";
+import { mkdirSync, rmSync, symlinkSync } from "node:fs";
 import { toFilePath } from "./internal/toFilePath.js";
 
-type Options = { mkdir?:boolean; overwrite?:boolean; };
+type Options = { makeDir?:boolean; overwrite?:boolean; };
 
 export function symLinkSync(original: string, link: string): boolean;
 export function symLinkSync(original: string, link: string, options: Options): boolean;
 export function symLinkSync(target: string, path: string, options?: Options): boolean {
 	try {
-		if (options?.mkdir) {
+		if (options?.makeDir) {
 			mkdirSync(toFilePath(path), { recursive:true });
 		}
 	}catch(ex) {

@@ -1,4 +1,4 @@
-import { exists } from "fs";
+import { exists } from "node:fs";
 
 /**
  * Checks to see if the given file exists.

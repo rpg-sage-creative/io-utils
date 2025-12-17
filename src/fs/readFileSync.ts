@@ -1,4 +1,4 @@
-import { readFileSync as fsReadFileSync } from "fs";
+import { readFileSync as fsReadFileSync } from "node:fs";
 import { fileExistsSync } from "./fileExistsSync.js";
 
 /** Returns a Buffer if the file exists and it can read a buffer, or null otherwise. */

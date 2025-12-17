@@ -1,9 +1,9 @@
 import { error } from "@rsc-utils/core-utils";
-import { mkdirSync, rmSync, symlinkSync } from "fs";
+import { mkdirSync, rmSync, symlinkSync } from "node:fs";
 import { toFilePath } from "./internal/toFilePath.js";
 export function symLinkSync(target, path, options) {
     try {
-        if (options?.mkdir) {
+        if (options?.makeDir) {
             mkdirSync(toFilePath(path), { recursive: true });
         }
     }

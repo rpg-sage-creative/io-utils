@@ -1,4 +1,4 @@
-import { writeFile as fsWriteFile } from "fs";
+import { writeFile as fsWriteFile } from "node:fs";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
 import { toFilePath } from "./internal/toFilePath.js";
 import { makeDir } from "./makeDir.js";

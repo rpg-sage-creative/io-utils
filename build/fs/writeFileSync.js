@@ -1,4 +1,4 @@
-import { writeFileSync as fsWriteFileSync, mkdirSync } from "fs";
+import { writeFileSync as fsWriteFileSync, mkdirSync } from "node:fs";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
 import { toFilePath } from "./internal/toFilePath.js";
 export function writeFileSync(filePathAndName, content, options) {

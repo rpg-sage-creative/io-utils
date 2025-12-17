@@ -89,7 +89,7 @@ export class PdfCacher {
 		});
 	}
 
-	/** Reads the local file and returns the JSON returned by PDFParser. */
+	/** Reads the local file and returns the Fields returned by PDFParser. */
 	public async readFields(): Promise<Field[]> {
 		const cached = await this.setCache();
 		if (!cached) {

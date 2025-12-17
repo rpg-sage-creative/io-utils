@@ -1,4 +1,4 @@
-import { readFile as fsReadFile } from "fs";
+import { readFile as fsReadFile } from "node:fs";
 
 /**
  * Resolves with a buffer of the file's contents, or rejects with "Not a Buffer" or an error (if one occured).

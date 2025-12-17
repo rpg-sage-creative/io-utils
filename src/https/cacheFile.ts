@@ -1,6 +1,6 @@
 import { verbose, type Optional, type ProgressTracker } from "@rsc-utils/core-utils";
 import type { RedirectableRequest } from "follow-redirects";
-import { WriteStream, createWriteStream, existsSync, mkdirSync, rmSync, statSync } from "fs";
+import { WriteStream, createWriteStream, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import type { ClientRequest, IncomingMessage } from "http";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";

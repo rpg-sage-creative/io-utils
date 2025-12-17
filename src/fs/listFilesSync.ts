@@ -1,5 +1,5 @@
 import { error } from "@rsc-utils/core-utils";
-import { readdirSync } from "fs";
+import { readdirSync } from "node:fs";
 import { createExtFilter } from "./internal/createExtFilter.js";
 
 /**

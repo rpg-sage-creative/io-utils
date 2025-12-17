@@ -115,8 +115,8 @@ export class AppServer<T> {
 		return this;
 	}
 
-	public static start<T>(name: string, port: number, bufferHandler: BufferHandler<T>): AppServer<T>;
 	public static start<T>(name: string, port: number, handlers: Handlers<T>): AppServer<T>;
+	public static start<T>(name: string, port: number, bufferHandler: BufferHandler<T>): AppServer<T>;
 	public static start<T>(name: string, port: number, arg: Handlers<T> | BufferHandler<T>): AppServer<T> {
 		const handlers = typeof(arg) === "function" ? { bufferHandler:arg } : arg;
 		return new AppServer(name, handlers).listen(port);

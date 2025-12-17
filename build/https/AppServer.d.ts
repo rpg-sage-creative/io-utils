@@ -23,7 +23,7 @@ export declare class AppServer<T> {
     destroy(): void;
     port?: number;
     listen(port: number): this;
-    static start<T>(name: string, port: number, bufferHandler: BufferHandler<T>): AppServer<T>;
     static start<T>(name: string, port: number, handlers: Handlers<T>): AppServer<T>;
+    static start<T>(name: string, port: number, bufferHandler: BufferHandler<T>): AppServer<T>;
 }
 export {};

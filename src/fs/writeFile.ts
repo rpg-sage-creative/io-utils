@@ -3,8 +3,10 @@ import { contentToFileOutput } from "./internal/contentToFileOutput.js";
 import { toFilePath } from "./internal/toFilePath.js";
 import { makeDir } from "./makeDir.js";
 
+type Options = { makeDir?:boolean; formatted?:boolean; };
+
 /** Writes the given content to the given file path/name, optionally building the path if it doesn't exist, optionally formatting JSON output. */
-export async function writeFile<T>(filePathAndName: string, content: T, options?: { makeDir?:boolean; formatted?:boolean; }): Promise<boolean> {
+export async function writeFile<T>(filePathAndName: string, content: T, options?: Options): Promise<boolean> {
 	if (options?.makeDir) {
 		await makeDir(toFilePath(filePathAndName));
 	}

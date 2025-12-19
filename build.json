@@ -1,12 +1,12 @@
 {
 "name":"@rsc-utils/io-utils",
-"version":"0.5.2",
+"version":"0.5.3",
 "branch":"main",
-"commit":"8a63f4ba16da2eecf3a98e83d74c38e11637921a",
-"commitSubject":"default to handlers vs bufferhandler",
-"commitTs":1765931270000,
-"commitDate":"2025-12-16-1627",
-"buildTs":1765931320000,
-"buildDate":"2025-12-16-1628",
+"commit":"768611e2bda1a9085c617599c5123a56fb651635",
+"commitSubject":"update core-utils and scripts",
+"commitTs":1766184547000,
+"commitDate":"2025-12-19-1449",
+"buildTs":1766184792000,
+"buildDate":"2025-12-19-1453",
 "author":"Randal"
 }

@@ -22,12 +22,12 @@
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"@aws-sdk/client-dynamodb": "^3.808.0",
-		"@rsc-utils/core-utils": "rpg-sage-creative/core-utils#v0.13.2",
+		"@aws-sdk/client-dynamodb": "^3.956.0",
+		"@rsc-utils/core-utils": "rpg-sage-creative/core-utils#v0.13.3",
 		"csv-parser": "^3.2.0",
-		"exifreader": "^4.30.1",
-		"follow-redirects": "^1.15.9",
-		"pdf2json": "^3.1.5"
+		"exifreader": "^4.33.1",
+		"follow-redirects": "^1.15.11",
+		"pdf2json": "^3.2.2"
 	},
 	"exifreader": {
 		"include": {

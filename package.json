@@ -12,15 +12,15 @@
 		"@rpg-sage-creative:registry": "https://npm.pkg.github.com"
 	},
 	"scripts": {
-		"build": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/build.sh",
-		"release": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/release.sh",
+		"build": "bash ./node_modules/@rsc-utils/dev-scripts/sh/build.sh",
+		"release": "bash ./node_modules/@rsc-utils/dev-scripts/sh/release.sh",
 		"-pretest": "docker compose -f docker-compose.yml up -d",
-		"test": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/test.sh --detectOpenHandles",
+		"test": "bash ./node_modules/@rsc-utils/dev-scripts/sh/test.sh",
 		"-posttest": "docker compose -f docker-compose.yml down",
-		"create-test-todos": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/create-test-js.sh"
+		"create-test-todos": "bash ./node_modules/@rsc-utils/dev-scripts/sh/create-test-js.sh"
 	},
 	"devDependencies": {
-		"@rpg-sage-creative/dev-scripts": "^1.0.0",
+		"@rsc-utils/dev-scripts": "github:rpg-sage-creative/dev-scripts#semver:^1.1.0",
 		"@types/follow-redirects": "^1.14.4",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^24.10.4",
@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-dynamodb": "^3.956.0",
-		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.0.0",
+		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.0.1",
 		"csv-parser": "^3.2.0",
 		"exifreader": "^4.33.0",
 		"follow-redirects": "^1.15.11",

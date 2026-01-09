@@ -30,6 +30,9 @@ export class PdfJsonManager {
                     if (strings.includes(t)) {
                         snippetsFound[i] = true;
                     }
+                    else if (strings.includes(t.replaceAll("%20", " "))) {
+                        snippetsFound[i] = true;
+                    }
                 });
                 if (!snippetsFound.includes(false)) {
                     return true;

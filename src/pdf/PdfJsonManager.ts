@@ -47,6 +47,10 @@ export class PdfJsonManager<T extends PdfJson = PdfJson> {
 					if (strings.includes(t)) {
 						snippetsFound[i] = true;
 					}
+					/** @todo retest all compatible pdfs to see if this is needed */
+					else if (strings.includes(t.replaceAll("%20", " "))) {
+						snippetsFound[i] = true;
+					}
 				});
 				// return true as soon as each text is found
 				if (!snippetsFound.includes(false)) {

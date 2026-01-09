@@ -62,6 +62,9 @@ const IPv6RegExp = regex `
 )
 `;
 export const UrlRegExp = regex("i") `
+	# ensure this doesn't start as part of another word
+	\b
+
 	# protocol
 	(s?ftp|https?)://
 

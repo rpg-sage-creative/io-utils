@@ -21,10 +21,12 @@ describe("url", () => {
 		{ options:undefined, input:"https://google.com:655350/q?word=text#marked", testResult:true, execResult:["https://google.com:65535"], captureGroup:undefined, captureValue:undefined },
 		// port too long
 		{ options:{anchored:true}, input:"https://google.com:655350/q?word=text#marked", testResult:false, execResult:null, captureGroup:undefined, captureValue:undefined },
-		// shttp not valid; but without anchor input.slice(1) is a valid url
-		{ options:undefined, input:"shttp://google.com:80/q?word=text#marked", testResult:true, execResult:["http://google.com:80/q?word=text#marked"], captureGroup:undefined, captureValue:undefined },
 		// shttp not valid
-		{ options:{anchored:true}, input:"shttp://google.com:80/q?word=text#marked", testResult:false, execResult:null, captureGroup:undefined, captureValue:undefined },
+		{ options:undefined, input:"shttp://google.com:80/q?word=text#marked", testResult:false, execResult:null, captureGroup:undefined, captureValue:undefined },
+		// shttp not valid; but a space the url can be found
+		{ options:undefined, input:"s http://google.com:80/q?word=text#marked", testResult:true, execResult:["http://google.com:80/q?word=text#marked"], captureGroup:undefined, captureValue:undefined },
+		// shttp not valid; but even with a space, the anchor stops it from being found
+		{ options:{anchored:true}, input:"s http://google.com:80/q?word=text#marked", testResult:false, execResult:null, captureGroup:undefined, captureValue:undefined },
 		// ftps not valid
 		{ options:undefined, input:"ftps://google.com:80/q?word=text#marked", testResult:false, execResult:null, captureGroup:undefined, captureValue:undefined },
 
@@ -33,6 +35,7 @@ describe("url", () => {
 	tests.forEach(({ options, input, testResult, execResult, captureGroup, captureValue }) => {
 		// simple test
 		test(tagLiterals`getUrlRegex(${options}).test(${input}) === ${testResult}`, () => {
+			console.debug(getUrlRegex(options))
 			expect(getUrlRegex(options).test(input)).toBe(testResult);
 		});
 		// if failed, we expect null

@@ -1,33 +1,39 @@
 {
-	"name": "@rsc-utils/io-utils",
+	"name": "@rpg-sage-creative/io-utils",
 	"version": "0.5.4",
 	"license": "LGPL-3.0-or-later",
 	"main": "build/index.js",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rpg-sage-creative/io-utils.git"
+	},
+	"publishConfig": {
+		"@rpg-sage-creative:registry": "https://npm.pkg.github.com"
+	},
 	"scripts": {
-		"build": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/build.sh",
-		"release": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/release.sh",
+		"build": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/build.sh",
+		"release": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/release.sh",
 		"-pretest": "docker compose -f docker-compose.yml up -d",
-		"test": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/test.sh --detectOpenHandles",
+		"test": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/test.sh --detectOpenHandles",
 		"-posttest": "docker compose -f docker-compose.yml down",
-		"test-todos": "bash ./node_modules/@rsc-utils/core-utils/scripts/sh/create-test-js.sh",
-		"clean": "rm -rf node_modules; rm -f package-lock.json; npm i; npm run build",
-		"refresh-tags": "git tag -l | xargs git tag -d; git fetch --tags"
+		"create-test-todos": "bash ./node_modules/@rpg-sage-creative/dev-scripts/sh/create-test-js.sh"
 	},
 	"devDependencies": {
+		"@rpg-sage-creative/dev-scripts": "^1.0.0",
 		"@types/follow-redirects": "^1.14.4",
-		"@types/jest": "^29.5.14",
-		"@types/node": "^24.6.1",
-		"jest": "^29.7.0",
-		"typescript": "^5.8.3"
+		"@types/jest": "^30.0.0",
+		"@types/node": "^24.10.4",
+		"jest": "^30.2.0",
+		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@aws-sdk/client-dynamodb": "^3.956.0",
-		"@rsc-utils/core-utils": "rpg-sage-creative/core-utils#v0.13.3",
+		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.0.0",
 		"csv-parser": "^3.2.0",
-		"exifreader": "^4.33.1",
+		"exifreader": "^4.33.0",
 		"follow-redirects": "^1.15.11",
-		"pdf2json": "^3.2.2"
+		"pdf2json": "^4.0.0"
 	},
 	"exifreader": {
 		"include": {

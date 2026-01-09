@@ -4,6 +4,8 @@
 		"alwaysStrict": true,
 		"allowSyntheticDefaultImports": true,
 
+		// "exactOptionalPropertyTypes": true,
+
 		"forceConsistentCasingInFileNames": true,
 
 		"lib": [ "ES2024" ],
@@ -17,6 +19,7 @@
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noImplicitThis": true,
+		// "noPropertyAccessFromIndexSignature": true,
 		"noUncheckedIndexedAccess": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,

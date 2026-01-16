@@ -1,4 +1,4 @@
-import { getOrCreateRegex } from "@rsc-utils/core-utils";
+import { getOrCreateRegex, globalizeRegex } from "@rsc-utils/core-utils";
 import { regex } from "regex";
 const IPv4RegExp = regex `
 (
@@ -106,7 +106,7 @@ export const UrlRegExp = regex("i") `
 	# anchor
 	(\#[\-\w]*)?
 `;
-export const UrlRegExpG = new RegExp(UrlRegExp, "g");
+export const UrlRegExpG = globalizeRegex(UrlRegExp);
 function createUrlRegex(options) {
     return options?.gFlag ? UrlRegExpG : UrlRegExp;
 }

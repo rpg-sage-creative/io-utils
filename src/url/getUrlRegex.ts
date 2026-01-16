@@ -1,4 +1,4 @@
-import { getOrCreateRegex, type RegExpAnchorOptions, type RegExpCaptureOptions, type RegExpFlagOptions } from "@rsc-utils/core-utils";
+import { getOrCreateRegex, globalizeRegex, type RegExpAnchorOptions, type RegExpCaptureOptions, type RegExpFlagOptions } from "@rsc-utils/core-utils";
 import { regex } from "regex";
 import type { WrapOptions } from "./types.js";
 
@@ -114,7 +114,7 @@ export const UrlRegExp = regex("i")`
 	(\#[\-\w]*)?
 `;
 
-export const UrlRegExpG = new RegExp(UrlRegExp, "g");
+export const UrlRegExpG = globalizeRegex(UrlRegExp);
 
 /** @todo have a serious think about wether or not iFlag is optional on a url ... */
 function createUrlRegex(options?: CreateOptions): RegExp {
@@ -122,7 +122,7 @@ function createUrlRegex(options?: CreateOptions): RegExp {
 }
 
 /**
- * Returns an instance of the number regexp.
+ * Returns an instance of the url regexp.
  * If gFlag is passed, a new regexp is created.
  * If gFlag is not passed, a cached version of the regexp is used.
  */

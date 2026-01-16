@@ -4,7 +4,7 @@ type GetOptions = RegExpFlagOptions & RegExpAnchorOptions & RegExpCaptureOptions
 export declare const UrlRegExp: RegExp;
 export declare const UrlRegExpG: RegExp;
 /**
- * Returns an instance of the number regexp.
+ * Returns an instance of the url regexp.
  * If gFlag is passed, a new regexp is created.
  * If gFlag is not passed, a cached version of the regexp is used.
  */

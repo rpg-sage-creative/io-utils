@@ -20,7 +20,7 @@
 		"create-test-todos": "bash ./node_modules/@rsc-utils/dev-scripts/sh/create-test-js.sh"
 	},
 	"devDependencies": {
-		"@rsc-utils/dev-scripts": "github:rpg-sage-creative/dev-scripts#semver:^1.1.0",
+		"@rsc-utils/dev-scripts": "github:rpg-sage-creative/dev-scripts#semver:^1.2.0",
 		"@types/follow-redirects": "^1.14.4",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^24.10.4",
@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-dynamodb": "^3.956.0",
-		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.0.8",
+		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.2.0",
 		"csv-parser": "^3.2.0",
 		"exifreader": "^4.33.0",
 		"follow-redirects": "^1.15.11",

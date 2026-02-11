@@ -35,7 +35,7 @@ describe("url", () => {
 	tests.forEach(({ options, input, testResult, execResult, captureGroup, captureValue }) => {
 		// simple test
 		test(tagLiterals`getUrlRegex(${options}).test(${input}) === ${testResult}`, () => {
-			console.debug(getUrlRegex(options))
+			// console.debug(getUrlRegex(options))
 			expect(getUrlRegex(options).test(input)).toBe(testResult);
 		});
 		// if failed, we expect null
@@ -98,7 +98,7 @@ describe("url", () => {
 		"<https://google.com:80/q?word=text#marked>"
 	];
 	wrapOptionalGoodUrls.forEach(url => {
-		test(tagLiterals`${wrapOptionalRegex}.test(${url}) === true`, () => {
+		test(tagLiterals`getUrlRegex({ wrapChars:"<>", wrapOptional:true }).test(${url}) === true`, () => {
 			expect(wrapOptionalRegex.test(url)).toBe(true);
 			expect(wrapOptionalRegex.exec(url)[0]).toBe(url);
 		});
@@ -109,7 +109,7 @@ describe("url", () => {
 		"<ftps://google.com:80/q?word=text#marked>"
 	];
 	wrapOptionalBadUrls.forEach(url => {
-		test(tagLiterals`${wrapOptionalRegex}.test(${url}) === false`, () => {
+		test(tagLiterals`getUrlRegex({ wrapChars:"<>", wrapOptional:true }).test(${url}) === false`, () => {
 			expect(wrapOptionalRegex.test(url)).toBe(false);
 			expect(wrapOptionalRegex.exec(url)).toBeNull();
 		});
@@ -120,7 +120,7 @@ describe("url", () => {
 		"https://cdn.discordapp.com/attachments/1173111558428184678/1204632128369983578/image.png?ex=65d57018&is=65c2fb18&hm=dfe49eddd9d55f29dd00a6d12e1bcc6e64218b7598b62827c32b15c5f0d466e3&",
 	];
 	anchoredWrapOptionalGoodUrls.forEach(url => {
-		test(tagLiterals`${anchoredWrapOptionalRegex}.test(${url}) === true`, () => {
+		test(tagLiterals`getUrlRegex({ anchored:true, wrapChars:"<>", wrapOptional:true }).test(${url}) === true`, () => {
 			expect(anchoredWrapOptionalRegex.test(url)).toBe(true);
 			expect(anchoredWrapOptionalRegex.exec(url)[0]).toBe(url);
 		});

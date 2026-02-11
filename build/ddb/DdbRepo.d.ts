@@ -22,7 +22,7 @@ export declare class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoIte
     static deleteAll(...keys: Optional<RepoItem>[]): Promise<{
         batchCount: number;
         errorCount: number;
-        unprocessed: RepoItem<`${number}`>[];
+        unprocessed: RepoItem<`${bigint}`>[];
         success: boolean;
         partial: boolean;
     }>;

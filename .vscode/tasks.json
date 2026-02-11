@@ -2,24 +2,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "run-test-build",
-			"command": "node",
-			"args": ["./test/build.mjs"],
-			"group": "test",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "shared",
-				"showReuseMessage": false,
-				"clear": false
-			}
-		},
-		{
 			"label": "run-test-all",
-			"command": "npm",
-			"args": ["run", "test"],
-			"dependsOn": ["run-test-build"],
+			"command": "pnpm",
+			"args": ["test"],
 			"group": {
 				"kind": "test",
 				"isDefault": true
@@ -34,13 +19,30 @@
 			}
 		},
 		{
-			"label": "run-test-specific",
-			"command": "npm",
-			"args": ["run", "test", "${file}"],
-			"dependsOn": ["run-test-build"],
+			"label": "run-test-one-js",
+			"command": "pnpm",
+			"args": ["test:one", "${file}"],
 			"group": {
 				"kind": "test",
-				"isDefault": "**/*.{ts,test.js}"
+				"isDefault": "**/*.test.js"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		{
+			"label": "run-test-one-ts",
+			"command": "bash",
+			"args": ["-c", "pnpm build && pnpm test:one <<< echo \"$(echo '${file}' | sed s/src/test/ | sed s/\\.ts/\\.test\\.js/)\""],
+			"type": "shell",
+			"group": {
+				"kind": "test",
+				"isDefault": "**/*.ts"
 			},
 			"presentation": {
 				"echo": true,
@@ -53,8 +55,8 @@
 		},
 		{
 			"label": "run-build",
-			"command": "npm",
-			"args": ["run", "build"],
+			"command": "pnpm",
+			"args": ["build"],
 			"group": {
 				"kind": "build",
 				"isDefault": true

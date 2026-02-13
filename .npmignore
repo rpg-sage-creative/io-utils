@@ -1,4 +1,7 @@
 /.github
 /.vscode
+/docker-volumes
+/node_modules
 /src
 /test
+docker-compose.yml

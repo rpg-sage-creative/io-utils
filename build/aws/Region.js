@@ -32,6 +32,6 @@ const regions = [
     "me-central-1",
     "sa-east-1",
 ];
-export function regionValidator(value) {
+export function isRegion(value) {
     return regions.includes(String(value));
 }

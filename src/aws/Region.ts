@@ -68,6 +68,7 @@ const regions: Region[] = [
 	"sa-east-1",
 ];
 
-export function regionValidator(value: Optional<string | number>): value is Region {
+/** a TypeGuard for AWS regions. */
+export function isRegion(value: Optional<string | number>): value is Region {
 	return regions.includes(String(value) as Region);
 }

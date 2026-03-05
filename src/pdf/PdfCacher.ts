@@ -1,4 +1,4 @@
-import { getDataRoot, randomSnowflake, type Optional, type Snowflake } from "@rsc-utils/core-utils";
+import { generateSnowflake, getDataRoot, type Optional, type Snowflake } from "@rsc-utils/core-utils";
 import PDFParser from "pdf2json";
 import { deleteFile } from "../fs/deleteFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -18,7 +18,7 @@ export class PdfCacher {
 
 	/** Creates a new PdfCacher for the given url. */
 	public constructor(private readonly url: string) {
-		this.id = randomSnowflake();
+		this.id = generateSnowflake();
 		this.cachedPdfPath = `${getDataRoot("cache/pdf", true)}/${this.id}.pdf`;
 	}
 

@@ -1,4 +1,4 @@
-import { getDataRoot, randomSnowflake, type Optional, type Snowflake } from "@rsc-utils/core-utils";
+import { generateSnowflake, getDataRoot, type Optional, type Snowflake } from "@rsc-utils/core-utils";
 import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -16,7 +16,7 @@ export class ImageCacher {
 
 	/** Creates a new ImageCacher for the given url. */
 	public constructor(private readonly url: string) {
-		this.id = randomSnowflake();
+		this.id = generateSnowflake();
 		this.cachedImagePath = `${getDataRoot("cache/image", true)}/${this.id}.img`;
 	}
 

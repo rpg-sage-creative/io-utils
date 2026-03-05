@@ -1,5 +1,5 @@
-import { enableLogLevels, pause, randomSnowflake, toLiteral } from "@rsc-utils/core-utils";
-import { DdbRepo } from "../../build/index.js";
+import { enableLogLevels, pause, generateSnowflake, toLiteral } from "@rsc-utils/core-utils";
+import { DdbRepo } from "../../../build/index.js";
 
 /*
 
@@ -24,13 +24,13 @@ function getJsonObjects() {
 	const jsonObjects = [];
 
 	for (let i = 0; i < 50; i++) {
-		const serverId = randomSnowflake();
+		const serverId = generateSnowflake();
 		jsonObjects.push({ name:`Random Server: ${serverId}`, id:serverId, objectType:"ddb-test-server" });
 
-		const userId = randomSnowflake();
+		const userId = generateSnowflake();
 		jsonObjects.push({ name:`Random User: ${userId}`, id:userId, objectType:"ddb-test-user" });
 
-		const botId = randomSnowflake();
+		const botId = generateSnowflake();
 		jsonObjects.push({
 			name: `Random Bot: ${botId}`,
 			id: botId,

@@ -1,4 +1,4 @@
-import { getDataRoot, randomSnowflake } from "@rsc-utils/core-utils";
+import { generateSnowflake, getDataRoot } from "@rsc-utils/core-utils";
 import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -10,7 +10,7 @@ export class ImageCacher {
     cachedImagePath;
     constructor(url) {
         this.url = url;
-        this.id = randomSnowflake();
+        this.id = generateSnowflake();
         this.cachedImagePath = `${getDataRoot("cache/image", true)}/${this.id}.img`;
     }
     async setCache() {

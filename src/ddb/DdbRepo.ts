@@ -12,6 +12,19 @@ type RepoItem<Id extends RepoId = Snowflake> = { id:Id; objectType:string; };
 type BatchGetRequestItems = Record<string, { Keys:{ id:AttributeValue; }[] }>;
 type BatchWriteRequestItems = Record<string, { PutRequest?:{ Item:Record<string, AttributeValue>; }; DeleteRequest?:{ Key: { id:AttributeValue; }; }; }[]>;
 
+type BatchGetResults<Item extends RepoItem<any>> = {
+	batchCount: number;
+	errorCount: number;
+	values: (Item | undefined)[];
+};
+type BatchResults<Item extends RepoItem> = {
+	batchCount: number;
+	errorCount: number;
+	unprocessed: Item[];
+	success: boolean;
+	partial: boolean;
+};
+
 export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = RepoItem<Id>> {
 	public constructor(public tableName: string) { }
 
@@ -46,9 +59,15 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		return undefined;
 	}
 
-	public async getByIds(...ids: Optional<Id>[]): Promise<(Item | undefined)[]> {
+	public async getByIds(ids: Optional<Id>[]): Promise<(Item | undefined)[]>;
+	/** @deprecated don't use spread operator, use getBy(Id[]) */
+	public async getByIds(...ids: Optional<Id>[]): Promise<(Item | undefined)[]>;
+	public async getByIds(...ids: Optional<Id>[] | Optional<Id>[][]): Promise<(Item | undefined)[]> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		ids = ids.flat() as Optional<Id>[];
+
 		const keys = ids.map(id => id ? ({ id, objectType:this.tableName }) : undefined);
-		const results = await DdbRepo.getBy<Id>(...keys);
+		const results = await DdbRepo.getBy<Id>(keys);
 		return results.values as (Item | undefined)[];
 	}
 
@@ -85,7 +104,13 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		});
 	}
 
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]) {
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
+	/** @deprecated don't use spread operator, use getBy(Item[]) */
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[] | Optional<Item>[][]): Promise<BatchGetResults<Item>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		keys = keys.flat() as Optional<Item>[];
+
 		let errorCount = 0;
 
 		const values: (Item | undefined)[] = [];
@@ -133,7 +158,13 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		};
 	}
 
-	public static async deleteAll(...keys: Optional<RepoItem>[]) {
+	public static async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
+	/** @deprecated don't use spread operator, use deleteAll(RepoItem[]) */
+	public static async deleteAll(...keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
+	public static async deleteAll(...keys: Optional<RepoItem>[] | Optional<RepoItem>[][]): Promise<BatchResults<RepoItem>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		keys = keys.flat() as RepoItem[];
+
 		let errorCount = 0;
 		const unprocessed: RepoItem[] = [];
 
@@ -174,7 +205,13 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		};
 	}
 
-	public static async saveAll<Item extends RepoItem>(...values: Item[]) {
+	public static async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>>;
+	/** @deprecated don't use spread operator, use saveAll(Item[]) */
+	public static async saveAll<Item extends RepoItem>(...values: Item[]): Promise<BatchResults<Item>>;
+	public static async saveAll<Item extends RepoItem>(...values: Item[] | Item[][]): Promise<BatchResults<Item>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		values = values.flat() as Item[];
+
 		let errorCount = 0;
 		const unprocessed: Item[] = [];
 

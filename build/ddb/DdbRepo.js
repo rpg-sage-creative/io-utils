@@ -32,8 +32,9 @@ export class DdbRepo {
         return undefined;
     }
     async getByIds(...ids) {
+        ids = ids.flat();
         const keys = ids.map(id => id ? ({ id, objectType: this.tableName }) : undefined);
-        const results = await DdbRepo.getBy(...keys);
+        const results = await DdbRepo.getBy(keys);
         return results.values;
     }
     async save(value) {
@@ -63,6 +64,7 @@ export class DdbRepo {
         });
     }
     static async getBy(...keys) {
+        keys = keys.flat();
         let errorCount = 0;
         const values = [];
         const { BatchGetMaxItemCount } = DdbRepo;
@@ -100,6 +102,7 @@ export class DdbRepo {
         };
     }
     static async deleteAll(...keys) {
+        keys = keys.flat();
         let errorCount = 0;
         const unprocessed = [];
         const { BatchPutMaxItemCount } = DdbRepo;
@@ -138,6 +141,7 @@ export class DdbRepo {
         };
     }
     static async saveAll(...values) {
+        values = values.flat();
         let errorCount = 0;
         const unprocessed = [];
         const { BatchPutMaxItemCount } = DdbRepo;

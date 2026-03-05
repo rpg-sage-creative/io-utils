@@ -1,13 +1,16 @@
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { warnReturnUndefined } from "@rsc-utils/core-utils";
-export async function sendSns({ content, subject, snsInfo }) {
-    const { accessKeyId, secretAccessKey, topicArn, region } = snsInfo;
-    const email = new PublishCommand({
+export async function sendSns({ clientConfig, content, subject }) {
+    const { topicArn, region, ...credentials } = clientConfig;
+    const snsClient = new SNSClient({
+        region,
+        credentials
+    });
+    const command = new PublishCommand({
         Subject: subject,
         Message: content,
         TopicArn: topicArn
     });
-    const sesClient = new SNSClient({ region, credentials: { accessKeyId, secretAccessKey } });
-    const results = await sesClient.send(email).catch(warnReturnUndefined);
+    const results = await snsClient.send(command).catch(warnReturnUndefined);
     return results?.$metadata.httpStatusCode === 200;
 }

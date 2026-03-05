@@ -1,3 +1,3 @@
 export * from "./ddb/index.js";
 export * from "./sns/index.js";
-export * from "./Region.js";
+export * from "./AwsRegion.js";

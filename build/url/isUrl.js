@@ -1,4 +1,4 @@
 import { getUrlRegex } from "./getUrlRegex.js";
 export function isUrl(value, options) {
-    return value ? getUrlRegex({ anchored: true, ...options }).test(value) : false;
+    return typeof (value) === "string" ? getUrlRegex({ anchored: true, ...options }).test(value) : false;
 }

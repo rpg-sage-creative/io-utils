@@ -1,7 +1,11 @@
-import { BatchGetItemCommand, BatchWriteItemCommand, CreateTableCommand, DeleteItemCommand, DeleteTableCommand, DynamoDB, GetItemCommand, ListTablesCommand, PutItemCommand, type AttributeValue } from "@aws-sdk/client-dynamodb";
+import { BatchGetItemCommand, BatchWriteItemCommand, DynamoDB, ListTablesCommand, type AttributeValue } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, partition, toLiteral, warn, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import type { VALID_URL } from "../../url/types.js";
+import type { AwsRegion } from "../AwsRegion.js";
+import type { DdbClientConfig } from "./DdbClientConfig.js";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
+import { DdbTable } from "./DdbTable.js";
 
 /*
  * 400 KB max json size in DDB
@@ -25,92 +29,61 @@ type BatchResults<Item extends RepoItem> = {
 	partial: boolean;
 };
 
-export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = RepoItem<Id>> {
-	public constructor(public tableName: string) { }
+export class DdbRepo {
+	public constructor(public config: DdbClientConfig) { }
 
-	public async deleteById(id: Optional<Id>): Promise<boolean> {
-		if (id) {
-			const command = new DeleteItemCommand({
-				TableName: this.tableName,
-				Key: { id: serialize(id) }
-			});
-
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
-			return response?.$metadata.httpStatusCode === 200;
-		}
-
-		/** @todo throw error? */
-		return false;
+	private client?: DynamoDB;
+	public getClient(): DynamoDB {
+		return this.client ??= DdbRepo.getClient(this.config);
 	}
 
-	public async getById(id: Optional<Id>): Promise<Item | undefined> {
-		if (id) {
-			const command = new GetItemCommand({
-				TableName: this.tableName,
-				Key: { id: serialize(id) }
+	public destroy(): void {
+		this.client?.destroy();
+		delete this.client;
+	}
+
+	public async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>> {
+		let errorCount = 0;
+		const unprocessed: RepoItem[] = [];
+
+		const { BatchPutMaxItemCount } = DdbRepo;
+		const batches = partition(keys, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+		for (const batch of batches) {
+			const RequestItems: BatchWriteRequestItems = { };
+			batch.forEach(key => {
+				// double check we have a valid id / type
+				if (key?.id && key.objectType) {
+					const tableItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = []);
+					tableItem.push({ DeleteRequest:{ Key:{ id:serialize(key.id) } } });
+				}else {
+					warn(`Invalid Value: DdbRepo.deleteAll(${toLiteral(key)})`);
+				}
 			});
 
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
-			if (response?.Item) {
-				return deserializeObject(response.Item);
+			const command = new BatchWriteItemCommand({ RequestItems });
+			const response = await this.getClient().send(command).catch(errorReturnUndefined);
+			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
+			if (response?.UnprocessedItems) {
+				Object.keys(response.UnprocessedItems).forEach(objectType => {
+					response.UnprocessedItems?.[objectType]?.forEach(({DeleteRequest}) => {
+						const id = deserializeObject<RepoItem>(DeleteRequest?.Key!).id;
+						unprocessed.push({ id, objectType });
+					});
+				});
 			}
 		}
 
-		return undefined;
+		const unprocessedCount = unprocessed.length;
+		return {
+			batchCount: batches.length,
+			errorCount,
+			unprocessed,
+			success: errorCount === 0 && unprocessedCount === 0,
+			partial: unprocessedCount > 0 && unprocessedCount < keys.length
+		};
 	}
 
-	public async getByIds(ids: Optional<Id>[]): Promise<(Item | undefined)[]>;
-	/** @deprecated don't use spread operator, use getBy(Id[]) */
-	public async getByIds(...ids: Optional<Id>[]): Promise<(Item | undefined)[]>;
-	public async getByIds(...ids: Optional<Id>[] | Optional<Id>[][]): Promise<(Item | undefined)[]> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		ids = ids.flat() as Optional<Id>[];
-
-		const keys = ids.map(id => id ? ({ id, objectType:this.tableName }) : undefined);
-		const results = await DdbRepo.getBy<Id>(keys);
-		return results.values as (Item | undefined)[];
-	}
-
-	public async save(value: Optional<Item>): Promise<boolean> {
-		if (value?.id) {
-			const command = new PutItemCommand({
-				TableName: this.tableName,
-				Item: serialize(value as object).M
-			});
-
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
-			return response?.$metadata.httpStatusCode === 200;
-		}
-
-		/** @todo throw error? */
-		return false;
-	}
-
-	public static async testConnection(client = DdbRepo.getClient()): Promise<boolean> {
-		const command = new ListTablesCommand({});
-		const response = await client.send(command).catch(() => undefined);
-		return response !== undefined;
-	}
-
-	protected static getClient(): DynamoDB {
-		return new DynamoDB({
-			credentials: {
-				accessKeyId: "ACCESSKEYID",
-				secretAccessKey: "SECRETACCESSKEY",
-			},
-			endpoint: "http://localhost:8000",
-			region: "local",
-			// region: "us-west-1",
-		});
-	}
-
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
-	/** @deprecated don't use spread operator, use getBy(Item[]) */
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[] | Optional<Item>[][]): Promise<BatchGetResults<Item>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		keys = keys.flat() as Optional<Item>[];
-
+	public async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>> {
 		let errorCount = 0;
 
 		const values: (Item | undefined)[] = [];
@@ -133,7 +106,7 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 
 			// send the request
 			const command = new BatchGetItemCommand({ RequestItems });
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
+			const response = await this.getClient().send(command).catch(errorReturnUndefined);
 			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.Responses) {
 
@@ -158,60 +131,17 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		};
 	}
 
-	public static async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
-	/** @deprecated don't use spread operator, use deleteAll(RepoItem[]) */
-	public static async deleteAll(...keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
-	public static async deleteAll(...keys: Optional<RepoItem>[] | Optional<RepoItem>[][]): Promise<BatchResults<RepoItem>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		keys = keys.flat() as RepoItem[];
-
-		let errorCount = 0;
-		const unprocessed: RepoItem[] = [];
-
-		const { BatchPutMaxItemCount } = DdbRepo;
-		const batches = partition(keys, (_, index) => Math.floor(index / BatchPutMaxItemCount));
-		for (const batch of batches) {
-			const RequestItems: BatchWriteRequestItems = { };
-			batch.forEach(key => {
-				// double check we have a valid id / type
-				if (key?.id && key.objectType) {
-					const tableItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = []);
-					tableItem.push({ DeleteRequest:{ Key:{ id:serialize(key.id) } } });
-				}else {
-					warn(`Invalid Value: DdbRepo.deleteAll(${toLiteral(key)})`);
-				}
-			});
-
-			const command = new BatchWriteItemCommand({ RequestItems });
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
-			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
-			if (response?.UnprocessedItems) {
-				Object.keys(response.UnprocessedItems).forEach(objectType => {
-					response.UnprocessedItems?.[objectType]?.forEach(({DeleteRequest}) => {
-						const id = deserializeObject<RepoItem>(DeleteRequest?.Key!).id;
-						unprocessed.push({ id, objectType });
-					});
-				});
-			}
-		}
-
-		const unprocessedCount = unprocessed.length;
-		return {
-			batchCount: batches.length,
-			errorCount,
-			unprocessed,
-			success: errorCount === 0 && unprocessedCount === 0,
-			partial: unprocessedCount > 0 && unprocessedCount < keys.length
-		};
+	public async getTableNames(): Promise<string[] | undefined> {
+		const command = new ListTablesCommand({});
+		const response = await this.getClient().send(command);//.catch(errorReturnUndefined);
+		return response?.TableNames;
 	}
 
-	public static async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>>;
-	/** @deprecated don't use spread operator, use saveAll(Item[]) */
-	public static async saveAll<Item extends RepoItem>(...values: Item[]): Promise<BatchResults<Item>>;
-	public static async saveAll<Item extends RepoItem>(...values: Item[] | Item[][]): Promise<BatchResults<Item>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		values = values.flat() as Item[];
+	public for(tableName: string): DdbTable {
+		return new DdbTable(this, tableName);
+	}
 
+	public async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>> {
 		let errorCount = 0;
 		const unprocessed: Item[] = [];
 
@@ -230,7 +160,7 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 			});
 
 			const command = new BatchWriteItemCommand({ RequestItems });
-			const response = await DdbRepo.getClient().send(command).catch(errorReturnUndefined);
+			const response = await this.getClient().send(command).catch(errorReturnUndefined);
 			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.UnprocessedItems) {
 				Object.keys(response.UnprocessedItems).forEach(objectType => {
@@ -251,45 +181,65 @@ export class DdbRepo<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = 
 		};
 	}
 
-	/** ensures the table exists ... DEBUG / TEST ONLY */
-	public static async for(tableName: string): Promise<DdbRepo> {
-		const client = DdbRepo.getClient();
-		const command = new ListTablesCommand({});
-		const response = await client.send(command);//.catch(errorReturnUndefined);
-		const tester = new RegExp(`^${tableName}$`, "i");
-		const exists = response?.TableNames?.some(name => tester.test(name));
-		if (!exists) {
-			const command = new CreateTableCommand({
-				TableName: tableName,
-				AttributeDefinitions: [
-					{ AttributeName:"id", AttributeType:"S" }
-				],
-				KeySchema: [
-					{ AttributeName:"id", KeyType:"HASH" }
-				],
-				ProvisionedThroughput: {
-					ReadCapacityUnits: 5,
-					WriteCapacityUnits: 5
-				}
-			});
-			await client.send(command);//.catch(errorReturnUndefined);
-		}
-		return new DdbRepo(tableName);
+	public async testConnection(): Promise<boolean> {
+		return DdbRepo.testConnection(this.getClient());
 	}
 
-	/** drops the table if it exists ... DEBUG / TEST ONLY */
-	public static async drop(tableName: string): Promise<boolean> {
-		const client = DdbRepo.getClient();
+	/** Tests that a command can be sent successfully. If no client is given, then a client is created using DdbRepo.LocalstackTestConfig */
+	public static async testConnection(client = DdbRepo.getClient()): Promise<boolean> {
 		const command = new ListTablesCommand({});
-		const response = await client.send(command);//.catch(errorReturnUndefined);
-		const tester = new RegExp(`^${tableName}$`, "i");
-		const TableName = response?.TableNames?.find(name => tester.test(name));
-		if (TableName) {
-			const command = new DeleteTableCommand({ TableName });
-			const response = await client.send(command);//.catch(errorReturnUndefined);
-			return response.$metadata.httpStatusCode === 200;
-		}
-		return false;
+		const response = await client.send(command).catch(() => undefined);
+		return response !== undefined;
+	}
+
+	/** Returns a DynamoDb object for the given config. If no config is given, then DdbRepo.LocalstackTestConfig is used. */
+	public static getClient(config?: DdbClientConfig): DynamoDB {
+		const { endpoint, region, ...credentials } = config ?? DdbRepo.DdbClientConfig;
+		return new DynamoDB({ credentials, endpoint, region });
+	}
+
+	/** Default config to be used by DdbRepo. */
+	public static DdbClientConfig: DdbClientConfig = {
+		accessKeyId: "ACCESSKEYID",
+		endpoint: "http://localhost:8000" as VALID_URL,
+		region: "local" as AwsRegion,
+		secretAccessKey: "SECRETACCESSKEY",
+	};
+
+	/** @deprecated use instance methods */
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
+	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[] | Optional<Item>[][]): Promise<BatchGetResults<Item>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		keys = keys.flat() as Optional<Item>[];
+		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
+		const results = await new DdbRepo(DdbRepo.DdbClientConfig).getBy(keys);
+		ddbRepo.destroy();
+		return results;
+	}
+
+	/** @deprecated use instance methods */
+	public static async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
+	public static async deleteAll(...keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
+	public static async deleteAll(...keys: Optional<RepoItem>[] | Optional<RepoItem>[][]): Promise<BatchResults<RepoItem>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		keys = keys.flat() as RepoItem[];
+		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
+		const results = await new DdbRepo(DdbRepo.DdbClientConfig).deleteAll(keys);
+		ddbRepo.destroy();
+		return results;
+	}
+
+	/** @deprecated use instance methods */
+	public static async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>>;
+	public static async saveAll<Item extends RepoItem>(...values: Item[]): Promise<BatchResults<Item>>;
+	public static async saveAll<Item extends RepoItem>(...values: Item[] | Item[][]): Promise<BatchResults<Item>> {
+		/** @todo remove this when we remove the deprecated signature that spreads the args */
+		values = values.flat() as Item[];
+		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
+		const results = await new DdbRepo(DdbRepo.DdbClientConfig).saveAll(values);
+		ddbRepo.destroy();
+		return results;
 	}
 
 	public static readonly BatchGetMaxItemCount = 100;

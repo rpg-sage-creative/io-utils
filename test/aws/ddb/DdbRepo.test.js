@@ -1,4 +1,4 @@
-import { enableLogLevels, pause, generateSnowflake, toLiteral } from "@rsc-utils/core-utils";
+import { enableLogLevels, pause, generateSnowflake, tagLiterals } from "@rsc-utils/core-utils";
 import { DdbRepo } from "../../../build/index.js";
 
 /*
@@ -7,16 +7,21 @@ import { DdbRepo } from "../../../build/index.js";
 
 */
 
+/** @type {DdbRepo | undefined} */
+let ddbRepo;
+
 enableLogLevels("development");
 
 // let the container finish starting
 beforeAll(async () => {
+	ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
+
 	let connected;
 	do {
 		// pause a split second
 		await pause(250);
 		// try to list tables
-		connected = await DdbRepo.testConnection();
+		connected = await ddbRepo.testConnection();
 	}while (!connected);
 });
 
@@ -52,8 +57,11 @@ function getJsonObjects() {
 	return jsonObjects;
 }
 
+describe("aws", () => {
 describe("ddb", () => {
 	describe("DdbRepo", () => {
+		let timeout = undefined; // default
+		// timeout = 10 * 1000; // 10 seconds
 
 		const jsonObjects = getJsonObjects();
 		const idKeys = jsonObjects.map(({ id, objectType }) => ({ id, objectType }));
@@ -61,39 +69,39 @@ describe("ddb", () => {
 		const objectTypes = [...new Set(jsonObjects.map(({ objectType }) => objectType))];
 
 		describe(`Create Test Tables`, () => {
-			test(toLiteral(objectTypes), async () => {
+			test(JSON.stringify(objectTypes), async () => {
 				for (const objectType of objectTypes) {
-					expect(await DdbRepo.for(objectType)).toBeDefined();
+					expect(await ddbRepo.for(objectType).ensure()).toBeDefined();
 				}
-			}, 10*1000);
+			}, timeout);
 		});
 
 		describe("Single Item Commands", () => {
 
 			test(`save (${jsonObjects.length} items)`, async() => {
-				let ddb;
+				let ddbTable;
 				let objectType;
 				for (const json of jsonObjects) {
 					if (json.objectType !== objectType) {
-						ddb = await DdbRepo.for(objectType = json.objectType);
+						ddbTable = ddbRepo.for(objectType = json.objectType);
 					}
 
 					// initial json get/save/get
-					expect(await ddb.getById(json.id)).toBeUndefined();
-					expect(await ddb.save(json)).toBe(true);
-					expect(await ddb.getById(json.id)).toStrictEqual(json);
+					expect(await ddbTable.getById(json.id)).toBeUndefined();
+					expect(await ddbTable.save(json)).toBe(true);
+					expect(await ddbTable.getById(json.id)).toStrictEqual(json);
 				};
-			}, 10*1000);
+			}, timeout);
 
 			test(`mutate (${jsonObjects.length} items)`, async() => {
-				let ddb;
+				let ddbTable;
 				let objectType;
 				for (const json of jsonObjects) {
 					if (json.objectType !== objectType) {
-						ddb = await DdbRepo.for(objectType = json.objectType);
+						ddbTable = ddbRepo.for(objectType = json.objectType);
 					}
 
-					// alter the object and make sure it doesn't match the ddb
+					// alter the object and make sure it doesn't match the ddbTable
 					const objectTypeTwo = (json.objectType ?? "None").split("").reverse().join("");
 					const clone = { ...json, objectTypeTwo };
 
@@ -102,31 +110,31 @@ describe("ddb", () => {
 
 					// confirm clone object is different
 					expect(json).not.toStrictEqual(clone);
-					expect(await ddb.getById(clone.id)).not.toStrictEqual(clone);
+					expect(await ddbTable.getById(clone.id)).not.toStrictEqual(clone);
 
 					// save the clone successfully
-					expect(await ddb.save(clone)).toBe(true);
+					expect(await ddbTable.save(clone)).toBe(true);
 
 					// refetch the clone and make sure it doesn't match original
-					const fetched = await ddb.getById(json.id);
+					const fetched = await ddbTable.getById(json.id);
 					expect(fetched).toStrictEqual(clone);
 					expect(fetched).not.toStrictEqual(json);
 				};
-			}, 10*1000);
+			}, timeout);
 
 			test(`delete (${jsonObjects.length} items)`, async() => {
-				let ddb;
+				let ddbTable;
 				let objectType;
 				for (const json of jsonObjects) {
 					if (json.objectType !== objectType) {
-						ddb = await DdbRepo.for(objectType = json.objectType);
+						ddbTable = ddbRepo.for(objectType = json.objectType);
 					}
 
 					// delete and confirm
-					expect(await ddb.deleteById(json.id)).toBe(true);
-					expect(await ddb.getById(json.id)).toBeUndefined();
+					expect(await ddbTable.deleteById(json.id)).toBe(true);
+					expect(await ddbTable.getById(json.id)).toBeUndefined();
 				};
-			}, 10*1000);
+			}, timeout);
 
 		});
 
@@ -166,40 +174,45 @@ describe("ddb", () => {
 				partial: false
 			};
 
-			test(`DdbRepo.saveAll(...) --> ${toLiteral(expectedSaveAllResults)}`, async () => {
+			test(tagLiterals`DdbRepo.saveAll(...) --> ${expectedSaveAllResults}`, async () => {
 				// show they aren't there
-				expect(await DdbRepo.getBy(...idKeys)).toStrictEqual(expectedGetNoneResults);
+				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetNoneResults);
 				// save them
-				expect(await DdbRepo.saveAll(...jsonObjects)).toStrictEqual(expectedSaveAllResults);
+				expect(await ddbRepo.saveAll(jsonObjects)).toStrictEqual(expectedSaveAllResults);
 				// show they are there
-				expect(await DdbRepo.getBy(...idKeys)).toStrictEqual(expectedGetAllResults);
-			}, 10*1000);
+				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetAllResults);
+			}, timeout);
 
 			test(`DdbRepo.getBy`, async () => {
 				// reverse list and fetch
 				const reversedKeys = idKeys.slice().reverse();
 				// show the results are ordered as the keys
-				expect(await DdbRepo.getBy(...reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
-			}, 10*1000);
+				expect(await ddbRepo.getBy(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
+			}, timeout);
 
-			test(`DdbRepo.deleteAll(...) --> ${toLiteral(expectedDeleteAllResults)}`, async () => {
+			test(tagLiterals`DdbRepo.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
 				// show they are there
-				expect(await DdbRepo.getBy(...jsonObjects)).toStrictEqual(expectedGetAllResults);
+				expect(await ddbRepo.getBy(jsonObjects)).toStrictEqual(expectedGetAllResults);
 				// delete them
-				expect(await DdbRepo.deleteAll(...jsonObjects)).toStrictEqual(expectedDeleteAllResults);
+				expect(await ddbRepo.deleteAll(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
 				// show they aren't there
-				expect(await DdbRepo.getBy(...idKeys)).toStrictEqual(expectedGetNoneResults);
-			}, 10*1000);
+				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetNoneResults);
+			}, timeout);
 
 		});
 
 		describe(`Drop Test Tables`, () => {
-			test(toLiteral(objectTypes), async () => {
+			test(JSON.stringify(objectTypes), async () => {
 				for (const objectType of objectTypes) {
-					expect(await DdbRepo.drop(objectType)).toBe(true);
+					expect(await ddbRepo.for(objectType).drop()).toBe(true);
 				}
-			}, 10*1000);
+			}, timeout);
 		});
 
 	});
+});
+});
+
+afterAll(async () => {
+	ddbRepo?.destroy();
 });

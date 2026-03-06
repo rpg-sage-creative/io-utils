@@ -11,9 +11,9 @@ export declare class DdbTable<Id extends RepoId = Snowflake, Item extends RepoIt
     constructor(repo: DdbRepo, tableName: string);
     /** deletes the item in the table for the given id */
     deleteById(id: Optional<Id>): Promise<boolean>;
-    /** drops the table if it exists ... DEBUG / TEST ONLY */
+    /** @deprecated drops the table if it exists ... DEBUG / TEST ONLY */
     drop(): Promise<boolean>;
-    /** ensures the table exists ... DEBUG / TEST ONLY */
+    /** @deprecated ensures the table exists ... DEBUG / TEST ONLY */
     ensure(): Promise<boolean>;
     /** returns the item in the table for the given id */
     getById(id: Optional<Id>): Promise<Item | undefined>;

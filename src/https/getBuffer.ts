@@ -38,84 +38,89 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 	if (!(/^https?:\/\//i).test(url)) {
 		url = "https://" + url;
 	}
-	return new Promise((_resolve, _reject) => {
-		let req: RedirectableRequest<any, any> | null;
-		let res: (IncomingMessage & FollowResponse) | null;
-		let stream: (IncomingMessage & FollowResponse) | Gunzip | null;
-		let pTracker = opts?.logPercent || opts?.progressTracker
-			? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
-			: null;
-		const cleanup = () => {
-			stream?.removeAllListeners();
-			stream?.destroy();
-			stream = null;
-			res?.removeAllListeners();
-			res?.destroy();
-			res = null;
-			req?.removeAllListeners();
-			req?.destroy();
-			req = null;
-			pTracker?.finish();
-			pTracker = null;
-		};
-		const resolve = (buffer: Buffer) => {
-			cleanup();
-			_resolve(buffer);
-		};
-		const reject = (msg: any) => {
-			cleanup();
-			_reject(msg);
-		};
-		try {
-			const protocol = getProtocol(url);
-			const method = postData ? "request" : "get";
-			const payload = postData ? stringifyJson(postData) : null;
-			const options = payload ? {
-				headers: {
-					"Content-Type": "application/json",
-					"Content-Length": payload.length,
-					"Accept-Encoding": "gzip",
-				},
-				method: "POST"
-			} : { };
-			verbose(`${options?.method ?? "GET"} ${url}`);
-			if (options) {
-				verbose({options});
-			}
-			if (postData) {
-				verbose({postData});
-			}
 
-			req = protocol[method](url, options, response => {
-				res = response;
-				try {
-					const rChunks: Buffer[] = [];
-					stream = res.headers["content-encoding"] === "gzip"
-						? pipeline(res, createGunzip(), err => err ? reject(err) : void(0))
-						: res;
-					stream.once("close", reject);
-					stream.on("data", (rChunk: Buffer) => {
-						pTracker?.increment(rChunk.byteLength);
-						rChunks.push(rChunk);
-					});
-					stream.once("end", () => resolve(Buffer.concat(rChunks)));
-					stream.once("error", reject);
+	const { promise, reject, resolve } = Promise.withResolvers<Buffer>();
 
-				}catch(ex) {
-					reject(ex);
-				}
-			});
-			req.once("response", resp => pTracker?.start(+(resp.headers["content-length"] ?? 0)));
-			req.once("close", reject);
-			req.once("error", reject);
-			req.once("timeout", reject);
-			if (method === "request") {
-				req.write(payload);
-			}
-			/** @todo do I need this req.end() ??? */
-			req.end();
-		}catch(ex) {
-			reject(ex);
+	let request: RedirectableRequest<any, any> | null;
+	let response: (IncomingMessage & FollowResponse) | null;
+	let stream: (IncomingMessage & FollowResponse) | Gunzip | null;
+	let pTracker = opts?.logPercent || opts?.progressTracker
+		? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
+		: null;
+
+	const cleanup = () => {
+		stream?.removeAllListeners();
+		stream?.destroy();
+		stream = null;
+		response?.removeAllListeners();
+		response?.destroy();
+		response = null;
+		request?.removeAllListeners();
+		request?.destroy();
+		request = null;
+		pTracker?.finish();
+		pTracker = null;
+	};
+	const _resolve = (buffer: Buffer) => {
+		cleanup();
+		resolve(buffer);
+	};
+	const _reject = (msg: any) => {
+		cleanup();
+		reject(msg);
+	};
+
+	try {
+		const protocol = getProtocol(url);
+		const method = postData ? "request" : "get";
+		const payload = postData ? stringifyJson(postData) : null;
+		const options = payload ? {
+			headers: {
+				"Content-Type": "application/json",
+				"Content-Length": payload.length,
+				"Accept-Encoding": "gzip",
+			},
+			method: "POST"
+		} : { };
+		verbose(`${options?.method ?? "GET"} ${url}`);
+		if (options) {
+			verbose({options});
 		}
-	});
+		if (postData) {
+			verbose({postData});
+		}
+
+		request = protocol[method](url, options, _response => {
+			response = _response;
+			try {
+				const rChunks: Buffer[] = [];
+				stream = response.headers["content-encoding"] === "gzip"
+					? pipeline(response, createGunzip(), err => err ? _reject(err) : void(0))
+					: response;
+				stream.once("close", _reject);
+				stream.on("data", (rChunk: Buffer) => {
+					pTracker?.increment(rChunk.byteLength);
+					rChunks.push(rChunk);
+				});
+				stream.once("end", () => _resolve(Buffer.concat(rChunks)));
+				stream.once("error", _reject);
+
+			}catch(ex) {
+				_reject(ex);
+			}
+		});
+		request.once("response", resp => pTracker?.start(+(resp.headers["content-length"] ?? 0)));
+		request.once("close", _reject);
+		request.once("error", _reject);
+		request.once("timeout", _reject);
+		if (method === "request") {
+			request.write(payload);
+		}
+		/** @todo do I need this req.end() ??? */
+		request.end();
+	}catch(ex) {
+		_reject(ex);
+	}
+
+	return promise;
 }

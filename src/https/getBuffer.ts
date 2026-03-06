@@ -1,6 +1,8 @@
 import { stringifyJson, verbose, type ProgressTracker } from "@rsc-utils/core-utils";
+import type { FollowResponse, RedirectableRequest } from "follow-redirects";
+import type { IncomingMessage } from "node:http";
 import { pipeline } from "node:stream";
-import { createGunzip } from "node:zlib";
+import { createGunzip, type Gunzip } from "node:zlib";
 import { fileExistsSync } from "../fs/fileExistsSync.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
@@ -37,15 +39,31 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 		url = "https://" + url;
 	}
 	return new Promise((_resolve, _reject) => {
-		let pTracker = opts?.logPercent || opts?.progressTracker ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0) : null;
-		const resolve = (buffer: Buffer) => {
+		let req: RedirectableRequest<any, any> | null;
+		let res: (IncomingMessage & FollowResponse) | null;
+		let stream: (IncomingMessage & FollowResponse) | Gunzip | null;
+		let pTracker = opts?.logPercent || opts?.progressTracker
+			? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
+			: null;
+		const cleanup = () => {
+			stream?.removeAllListeners();
+			stream?.destroy();
+			stream = null;
+			res?.removeAllListeners();
+			res?.destroy();
+			res = null;
+			req?.removeAllListeners();
+			req?.destroy();
+			req = null;
 			pTracker?.finish();
 			pTracker = null;
+		};
+		const resolve = (buffer: Buffer) => {
+			cleanup();
 			_resolve(buffer);
 		};
 		const reject = (msg: any) => {
-			pTracker?.error(msg);
-			pTracker = null;
+			cleanup();
 			_reject(msg);
 		};
 		try {
@@ -68,12 +86,13 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 				verbose({postData});
 			}
 
-			const req = protocol[method](url, options, response => {
+			req = protocol[method](url, options, response => {
+				res = response;
 				try {
 					const rChunks: Buffer[] = [];
-					const stream = response.headers["content-encoding"] === "gzip"
-						? pipeline(response, createGunzip(), err => err ? reject(err) : void(0))
-						: response;
+					stream = res.headers["content-encoding"] === "gzip"
+						? pipeline(res, createGunzip(), err => err ? reject(err) : void(0))
+						: res;
 					stream.once("close", reject);
 					stream.on("data", (rChunk: Buffer) => {
 						pTracker?.increment(rChunk.byteLength);

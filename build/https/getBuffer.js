@@ -22,15 +22,31 @@ export function getBuffer(url, postData, opts) {
         url = "https://" + url;
     }
     return new Promise((_resolve, _reject) => {
-        let pTracker = opts?.logPercent || opts?.progressTracker ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0) : null;
-        const resolve = (buffer) => {
+        let req;
+        let res;
+        let stream;
+        let pTracker = opts?.logPercent || opts?.progressTracker
+            ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
+            : null;
+        const cleanup = () => {
+            stream?.removeAllListeners();
+            stream?.destroy();
+            stream = null;
+            res?.removeAllListeners();
+            res?.destroy();
+            res = null;
+            req?.removeAllListeners();
+            req?.destroy();
+            req = null;
             pTracker?.finish();
             pTracker = null;
+        };
+        const resolve = (buffer) => {
+            cleanup();
             _resolve(buffer);
         };
         const reject = (msg) => {
-            pTracker?.error(msg);
-            pTracker = null;
+            cleanup();
             _reject(msg);
         };
         try {
@@ -52,12 +68,13 @@ export function getBuffer(url, postData, opts) {
             if (postData) {
                 verbose({ postData });
             }
-            const req = protocol[method](url, options, response => {
+            req = protocol[method](url, options, response => {
+                res = response;
                 try {
                     const rChunks = [];
-                    const stream = response.headers["content-encoding"] === "gzip"
-                        ? pipeline(response, createGunzip(), err => err ? reject(err) : void (0))
-                        : response;
+                    stream = res.headers["content-encoding"] === "gzip"
+                        ? pipeline(res, createGunzip(), err => err ? reject(err) : void (0))
+                        : res;
                     stream.once("close", reject);
                     stream.on("data", (rChunk) => {
                         pTracker?.increment(rChunk.byteLength);

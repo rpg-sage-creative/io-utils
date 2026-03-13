@@ -1,8 +1,8 @@
-import { parseJson, verbose } from "@rsc-utils/core-utils";
+import { parseJson, ProgressTracker, verbose } from "@rsc-utils/core-utils";
 import { getText } from "./getText.js";
-export function getJson(url, postData) {
+export function getJson(url, postData, opts) {
     return new Promise((resolve, reject) => {
-        getText(url, postData).then(text => {
+        getText(url, postData, opts).then(text => {
             try {
                 resolve(parseJson(text));
             }

@@ -7,25 +7,23 @@ import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
 export function getBuffer(url, postData, opts) {
     if (typeof (url) !== "string") {
-        return Promise.reject(new Error("Invalid Url"));
+        return Promise.reject(new TypeError("Invalid Url"));
     }
-    if (/^file:\/\//i.test(url)) {
-        const path = url.slice(6);
-        if (fileExistsSync(path)) {
-            return readFile(path);
-        }
-        else {
-            return Promise.reject(new Error("Invalid Path"));
-        }
+    const urlLower = url.toLowerCase();
+    if (urlLower.startsWith("file://")) {
+        const path = url.slice(7);
+        return fileExistsSync(path)
+            ? readFile(path)
+            : Promise.reject(new Error("Invalid Path"));
     }
-    if (!(/^https?:\/\//i).test(url)) {
+    if (!(urlLower.startsWith("http://") || urlLower.startsWith("https://"))) {
         url = "https://" + url;
     }
-    const { promise, reject, resolve } = Promise.withResolvers();
+    const { promise, reject: __reject, resolve: __resolve } = Promise.withResolvers();
     let request;
     let response;
     let stream;
-    let pTracker = opts?.logPercent || opts?.progressTracker
+    let progressTracker = opts?.logPercent || opts?.progressTracker
         ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
         : null;
     const cleanup = () => {
@@ -38,16 +36,18 @@ export function getBuffer(url, postData, opts) {
         request?.removeAllListeners();
         request?.destroy();
         request = null;
-        pTracker?.finish();
-        pTracker = null;
+        if (progressTracker?.started) {
+            progressTracker?.finish();
+        }
+        progressTracker = null;
     };
-    const _resolve = (buffer) => {
+    const resolve = (buffer) => {
         cleanup();
-        resolve(buffer);
+        __resolve(buffer);
     };
-    const _reject = (msg) => {
+    const reject = (ev, msg) => {
         cleanup();
-        reject(msg);
+        __reject(msg ?? ev);
     };
     try {
         const protocol = getProtocol(url);
@@ -70,34 +70,58 @@ export function getBuffer(url, postData, opts) {
         }
         request = protocol[method](url, options, _response => {
             response = _response;
-            try {
-                const rChunks = [];
-                stream = response.headers["content-encoding"] === "gzip"
-                    ? pipeline(response, createGunzip(), err => err ? _reject(err) : void (0))
-                    : response;
-                stream.once("close", _reject);
-                stream.on("data", (rChunk) => {
-                    pTracker?.increment(rChunk.byteLength);
-                    rChunks.push(rChunk);
-                });
-                stream.once("end", () => _resolve(Buffer.concat(rChunks)));
-                stream.once("error", _reject);
-            }
-            catch (ex) {
-                _reject(ex);
-            }
+            stream = processResponse({ response, resolve, reject, progressTracker });
         });
-        request.once("response", resp => pTracker?.start(+(resp.headers["content-length"] ?? 0)));
-        request.once("close", _reject);
-        request.once("error", _reject);
-        request.once("timeout", _reject);
+        if (opts?.timeout) {
+            request.setTimeout(opts.timeout);
+        }
+        request.once("close", err => reject("request.close", err));
+        request.once("error", err => reject("request.error", err));
+        request.once("timeout", err => reject("request.timeout", err));
         if (method === "request") {
             request.write(payload);
         }
         request.end();
     }
     catch (ex) {
-        _reject(ex);
+        reject("try/catch (request)", ex);
     }
     return promise;
+}
+function processResponse({ response, resolve, reject, progressTracker }) {
+    let stream;
+    try {
+        let rChunks = [];
+        console.log(response.headers);
+        if ("content-length" in response.headers) {
+            const contentLength = +(response.headers["content-length"] ?? 0);
+            progressTracker?.start(contentLength);
+        }
+        stream = response.headers["content-encoding"] === "gzip"
+            ? pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void (0))
+            : response;
+        stream.once("close", (err) => reject("stream.close", err));
+        stream.on("data", (rChunk) => {
+            if (progressTracker?.started) {
+                progressTracker?.increment(rChunk.byteLength);
+            }
+            rChunks?.push(rChunk);
+        });
+        stream.once("end", () => {
+            if (rChunks?.length) {
+                const buffer = Buffer.concat(rChunks);
+                rChunks = null;
+                resolve(buffer);
+            }
+            else {
+                rChunks = null;
+                reject("stream.end", "empty buffer");
+            }
+        });
+        stream.once("error", (err) => reject("stream.error", err));
+    }
+    catch (ex) {
+        reject("try/catch (createStreamFromResponse)", ex);
+    }
+    return stream;
 }

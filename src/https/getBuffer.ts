@@ -1,4 +1,4 @@
-import { stringifyJson, verbose, type ProgressTracker } from "@rsc-utils/core-utils";
+import { stringifyJson, verbose, type Optional, type ProgressTracker } from "@rsc-utils/core-utils";
 import type { FollowResponse, RedirectableRequest } from "follow-redirects";
 import type { IncomingMessage } from "node:http";
 import { pipeline } from "node:stream";
@@ -8,7 +8,12 @@ import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
 
-type Opts = { progressTracker?:ProgressTracker; logPercent?:boolean; };
+type Opts = {
+	logPercent?: boolean;
+	progressTracker?: ProgressTracker;
+	/** milliseconds */
+	timeout?: number;
+};
 
 /**
  * You can pass in a fully formed url or leave off the protocol and allow it to prepend "https://".
@@ -21,53 +26,74 @@ export function getBuffer(url: string): Promise<Buffer>;
  * If you pass in a url with "http://" it will downgrade to use http protocol instead of https.
  * Sending postData will stringify the value and then do a POST instead of a GET.
 */
-export function getBuffer<T = any>(url: string, postData: T): Promise<Buffer>;
+export function getBuffer<T = any>(url: string, postData: T, opts?: Opts): Promise<Buffer>;
 
 export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Promise<Buffer> {
 	if (typeof(url) !== "string") {
-		return Promise.reject(new Error("Invalid Url"));
+		return Promise.reject(new TypeError("Invalid Url"));
 	}
-	if (/^file:\/\//i.test(url)) {
-		const path = url.slice(6);
-		if (fileExistsSync(path)) {
-			return readFile(path);
-		}else {
-			return Promise.reject(new Error("Invalid Path"));
-		}
+
+	const urlLower = url.toLowerCase();
+
+	// we don't need to use the request logic for file reads
+	if (urlLower.startsWith("file://")) {
+		const path = url.slice(7);
+		return fileExistsSync(path)
+			? readFile(path)
+			: Promise.reject(new Error("Invalid Path"));
 	}
-	if (!(/^https?:\/\//i).test(url)) {
+
+	// make sure the url starts with http:// or https://
+	if (!(urlLower.startsWith("http://") || urlLower.startsWith("https://"))) {
 		url = "https://" + url;
 	}
 
-	const { promise, reject, resolve } = Promise.withResolvers<Buffer>();
+	const { promise, reject:__reject, resolve:__resolve } = Promise.withResolvers<Buffer>();
 
-	let request: RedirectableRequest<any, any> | null;
-	let response: (IncomingMessage & FollowResponse) | null;
-	let stream: (IncomingMessage & FollowResponse) | Gunzip | null;
-	let pTracker = opts?.logPercent || opts?.progressTracker
+	// declare all objects that should be cleaned up before resolving/rejecting
+	let request: Optional<RedirectableRequest<any, any>>;
+	let response: Optional<Response>;
+	let stream: Optional<Stream>;
+	let progressTracker = opts?.logPercent || opts?.progressTracker
 		? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
 		: null;
 
+	// we need to cleanup resources regardless of resolve vs reject
 	const cleanup = () => {
+		//#region stream cleanup
 		stream?.removeAllListeners();
 		stream?.destroy();
 		stream = null;
+		//#endregion
+
+		//#region response cleanup
 		response?.removeAllListeners();
 		response?.destroy();
 		response = null;
+		//#endregion
+
+		//#region request cleanup
 		request?.removeAllListeners();
 		request?.destroy();
 		request = null;
-		pTracker?.finish();
-		pTracker = null;
+		//#endregion
+
+		//#region progress tracker cleanup
+		if (progressTracker?.started) {
+			progressTracker?.finish();
+		}
+		progressTracker = null;
+		//#endregion
 	};
-	const _resolve = (buffer: Buffer) => {
+
+	const resolve = (buffer: Buffer) => {
 		cleanup();
-		resolve(buffer);
+		__resolve(buffer);
 	};
-	const _reject = (msg: any) => {
+
+	const reject = (ev: string, msg: any) => {
 		cleanup();
-		reject(msg);
+		__reject(msg ?? ev);
 	};
 
 	try {
@@ -82,6 +108,7 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 			},
 			method: "POST"
 		} : { };
+
 		verbose(`${options?.method ?? "GET"} ${url}`);
 		if (options) {
 			verbose({options});
@@ -92,35 +119,97 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 
 		request = protocol[method](url, options, _response => {
 			response = _response;
-			try {
-				const rChunks: Buffer[] = [];
-				stream = response.headers["content-encoding"] === "gzip"
-					? pipeline(response, createGunzip(), err => err ? _reject(err) : void(0))
-					: response;
-				stream.once("close", _reject);
-				stream.on("data", (rChunk: Buffer) => {
-					pTracker?.increment(rChunk.byteLength);
-					rChunks.push(rChunk);
-				});
-				stream.once("end", () => _resolve(Buffer.concat(rChunks)));
-				stream.once("error", _reject);
-
-			}catch(ex) {
-				_reject(ex);
-			}
+			stream = processResponse({ response, resolve, reject, progressTracker });
 		});
-		request.once("response", resp => pTracker?.start(+(resp.headers["content-length"] ?? 0)));
-		request.once("close", _reject);
-		request.once("error", _reject);
-		request.once("timeout", _reject);
+
+		if (opts?.timeout) {
+			request.setTimeout(opts.timeout);
+		}
+
+		request.once("close", err => reject("request.close", err));
+		request.once("error", err => reject("request.error", err));
+		request.once("timeout", err => reject("request.timeout", err));
+
 		if (method === "request") {
 			request.write(payload);
 		}
-		/** @todo do I need this req.end() ??? */
+
+		/** @todo do I need this request.end() ??? */
 		request.end();
+
 	}catch(ex) {
-		_reject(ex);
+		reject("try/catch (request)", ex);
 	}
 
 	return promise;
+}
+
+type Response = IncomingMessage & FollowResponse;
+type Stream = (IncomingMessage & FollowResponse) | Gunzip;
+
+type CreateStreamArgs = {
+	response: Response;
+	resolve: (buffer: Buffer) => void;
+	reject: (ev: string, err: unknown) => void;
+	progressTracker: Optional<ProgressTracker>;
+}
+
+/**
+ * Reads all the data from the given response.
+ * If the encoding is gzip, then a separate stream is created using gunzip.
+ * The stream is returned so that it can be cleaned up by errors outside the response.
+ * @returns the original Response or a new gunzip Stream
+ */
+function processResponse({ response, resolve, reject, progressTracker }: CreateStreamArgs): Stream | undefined {
+	let stream: Stream | undefined;
+
+	try {
+		let rChunks: Buffer[] | null = [];
+
+		console.log(response.headers);
+
+		if ("content-length" in response.headers) {
+			const contentLength = +(response.headers["content-length"] ?? 0);
+			progressTracker?.start(contentLength);
+		}
+
+		// create the stream based on content encoding
+		stream = response.headers["content-encoding"] === "gzip"
+			// if content is encoded as gzip, we need a gunzip stream
+			? pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void(0))
+			// otherwise just use the response as is
+			: response;
+
+		stream.once("close", (err: any) =>
+			reject("stream.close", err)
+		);
+
+		stream.on("data", (rChunk: Buffer) => {
+			if (progressTracker?.started) {
+				progressTracker?.increment(rChunk.byteLength);
+			}
+			rChunks?.push(rChunk);
+		});
+
+		stream.once("end", () => {
+			if (rChunks?.length) {
+				const buffer = Buffer.concat(rChunks);
+				rChunks = null;
+				resolve(buffer);
+			}else {
+				rChunks = null;
+				reject("stream.end", "empty buffer");
+			}
+		});
+
+		stream.once("error", (err: any) =>
+			reject("stream.error", err)
+		);
+
+	}catch(ex) {
+		reject("try/catch (createStreamFromResponse)", ex);
+
+	}
+
+	return stream;
 }

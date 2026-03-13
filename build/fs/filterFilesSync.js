@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { createExtFilter } from "./internal/createExtFilter.js";
 import { isDirSync } from "./isDirSync.js";
 import { listFilesSync } from "./listFilesSync.js";
@@ -30,12 +31,16 @@ export function filterFilesSync(path, extOrFilterOrOpts, _recursive) {
     const filter = createFileFilter(options);
     const files = listFilesSync(path);
     for (const fileName of files) {
-        const filePath = `${path}/${fileName}`;
+        const filePath = join(path, fileName);
         if (isDirSync(filePath)) {
             if (options.recursive) {
-                if (options.dirFilter ? options.dirFilter(fileName, filePath) : true) {
+                const shouldProcess = !options.dirFilter
+                    || options.dirFilter(fileName, filePath);
+                if (shouldProcess) {
                     const children = filterFilesSync(filePath, options);
-                    children.forEach(child => output.push(child));
+                    for (const child of children) {
+                        output.push(child);
+                    }
                 }
             }
         }

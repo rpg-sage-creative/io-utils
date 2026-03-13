@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { createExtFilter } from "./internal/createExtFilter.js";
 import { isDirSync } from "./isDirSync.js";
 import { listFilesSync } from "./listFilesSync.js";
@@ -77,23 +78,33 @@ export function filterFilesSync(path: string, extOrFilterOrOpts: string | FileFi
 
 	const files = listFilesSync(path);
 	for (const fileName of files) {
-		const filePath = `${path}/${fileName}`;
+		const filePath = join(path, fileName);
 
 		// check to see if this is a directory
 		if (isDirSync(filePath)) {
+
 			// only process it if recursive
 			if (options.recursive) {
+
 				// process if no dirFilter or if dirFilter returns truthy
-				if (options.dirFilter ? options.dirFilter(fileName, filePath) : true) {
+				const shouldProcess = !options.dirFilter
+					|| options.dirFilter(fileName, filePath);
+
+				if (shouldProcess) {
 					const children = filterFilesSync(filePath, options);
-					children.forEach(child => output.push(child));
+					for (const child of children) {
+						output.push(child);
+					}
 				}
+
 			}
 
 		// run this file through the filter
 		}else if (filter(fileName, filePath)) {
 			output.push(filePath);
+
 		}
 	}
+
 	return output;
 }

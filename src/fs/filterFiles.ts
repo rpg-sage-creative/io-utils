@@ -2,6 +2,7 @@ import type { Awaitable } from "@rsc-utils/core-utils";
 import { createExtFilter } from "./internal/createExtFilter.js";
 import { isDir } from "./isDir.js";
 import { listFiles } from "./listFiles.js";
+import { join } from "node:path";
 
 type DirFilterFn = (dirName: string, dirPath: string) => Awaitable<boolean>;
 type FileFilterFn = (fileName: string, filePath: string) => Awaitable<boolean>;
@@ -78,23 +79,33 @@ export async function filterFiles(path: string, extOrFilterOrOpts: string | File
 
 	const files = await listFiles(path).catch(() => []);
 	for (const fileName of files) {
-		const filePath = `${path}/${fileName}`;
+		const filePath = join(path, fileName);
 
 		// check to see if this is a directory
 		if (await isDir(filePath)) {
+
 			// only process it if recursive
 			if (options.recursive) {
+
 				// process if no dirFilter or if dirFilter returns truthy
-				if (options.dirFilter ? await options.dirFilter(fileName, filePath) : true) {
+				const shouldProcess = !options.dirFilter
+					|| await options.dirFilter(fileName, filePath);
+
+				if (shouldProcess) {
 					const children = await filterFiles(filePath, options);
-					children.forEach(child => output.push(child));
+					for (const child of children) {
+						output.push(child);
+					}
 				}
+
 			}
 
 		// run this file through the filter
 		}else if (await filter(fileName, filePath)) {
 			output.push(filePath);
+
 		}
 	}
+
 	return output;
 }

@@ -45,7 +45,7 @@
 	"dependencies": {
 		"@aws-sdk/client-dynamodb": "^3.1002.0",
 		"@aws-sdk/client-sns": "^3.1002.0",
-		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.4.1",
+		"@rsc-utils/core-utils": "github:rpg-sage-creative/core-utils#semver:^1.6.0",
 		"csv-parser": "^3.2.0",
 		"exifreader": "^4.36.2",
 		"follow-redirects": "^1.15.11",

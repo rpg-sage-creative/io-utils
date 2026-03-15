@@ -1,5 +1,4 @@
-import { generateSnowflake, getDataRoot, type Optional, type Snowflake } from "@rsc-utils/core-utils";
-import { format, join } from "node:path";
+import { formatDataFilePath, generateSnowflake, type Optional, type Snowflake } from "@rsc-utils/core-utils";
 import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -18,9 +17,7 @@ export class ImageCacher {
 	/** Creates a new ImageCacher for the given url. */
 	public constructor(private readonly url: string) {
 		this.id = generateSnowflake();
-		const childPath = join("cache", "image");
-		const dir = getDataRoot(childPath, true);
-		this.cachedImagePath = format({ dir, base:this.id, ext:"img" });
+		this.cachedImagePath = formatDataFilePath({ dir:["cache", "image"], name:this.id, ext:"img" });
 	}
 
 	/** Reads from the url and writes the local file. */

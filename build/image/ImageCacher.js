@@ -1,5 +1,4 @@
-import { generateSnowflake, getDataRoot } from "@rsc-utils/core-utils";
-import { format, join } from "node:path";
+import { formatDataFilePath, generateSnowflake } from "@rsc-utils/core-utils";
 import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -12,9 +11,7 @@ export class ImageCacher {
     constructor(url) {
         this.url = url;
         this.id = generateSnowflake();
-        const childPath = join("cache", "image");
-        const dir = getDataRoot(childPath, true);
-        this.cachedImagePath = format({ dir, base: this.id, ext: "img" });
+        this.cachedImagePath = formatDataFilePath({ dir: ["cache", "image"], name: this.id, ext: "img" });
     }
     async setCache() {
         const buffer = await getBuffer(this.url).catch(() => undefined);

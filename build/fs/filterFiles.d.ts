@@ -6,9 +6,11 @@ type DirOptions = {
     recursive?: boolean;
 };
 type FileOptions = {
+    /** excludes the '.'; thus 'json' not '.json' */
     fileExt: string;
     fileFilter: FileFilterFn;
 } | {
+    /** excludes the '.'; thus 'json' not '.json' */
     fileExt: string;
     fileFilter?: never;
 } | {

@@ -1,7 +1,7 @@
 import { error } from "@rsc-utils/core-utils";
 import { symlink } from "node:fs";
+import { dirname } from "node:path";
 import { deleteFile } from "./deleteFile.js";
-import { toFilePath } from "./internal/toFilePath.js";
 import { makeDir } from "./makeDir.js";
 
 type Options = { makeDir?:boolean; overwrite?:boolean; };
@@ -10,7 +10,8 @@ export function symLink(original: string, link: string): Promise<boolean>;
 export function symLink(original: string, link: string, options: Options): Promise<boolean>;
 export async function symLink(target: string, path: string, options?: Options): Promise<boolean> {
 	if (options?.makeDir) {
-		await makeDir(toFilePath(path));
+		const pathParent = dirname(path);
+		await makeDir(pathParent);
 	}
 
 	return new Promise<boolean>(async res => {

@@ -1,11 +1,12 @@
 import { error } from "@rsc-utils/core-utils";
 import { symlink } from "node:fs";
+import { dirname } from "node:path";
 import { deleteFile } from "./deleteFile.js";
-import { toFilePath } from "./internal/toFilePath.js";
 import { makeDir } from "./makeDir.js";
 export async function symLink(target, path, options) {
     if (options?.makeDir) {
-        await makeDir(toFilePath(path));
+        const pathParent = dirname(path);
+        await makeDir(pathParent);
     }
     return new Promise(async (res) => {
         try {

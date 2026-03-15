@@ -1,10 +1,11 @@
 import { error } from "@rsc-utils/core-utils";
 import { mkdirSync, rmSync, symlinkSync } from "node:fs";
-import { toFilePath } from "./internal/toFilePath.js";
+import { dirname } from "node:path";
 export function symLinkSync(target, path, options) {
     try {
         if (options?.makeDir) {
-            mkdirSync(toFilePath(path), { recursive: true });
+            const pathParent = dirname(path);
+            mkdirSync(pathParent, { recursive: true });
         }
     }
     catch (ex) {

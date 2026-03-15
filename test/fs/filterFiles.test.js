@@ -1,5 +1,6 @@
 import { tagLiterals } from "@rsc-utils/core-utils";
 import { filterFiles, filterFilesSync } from "../../build/index.js";
+import { join } from "node:path";
 
 describe("fs", () => {
 
@@ -18,7 +19,7 @@ describe("fs", () => {
 		'symLink.test.js',
 		'symLinkSync.test.js',
 		'writeFiles.test.js',
-	].map(f => `${path}/${f}`);
+	].map(f => join(path, f));
 
 	const recursiveFiles = [
 		'files/jsonDb.json.db',
@@ -26,7 +27,7 @@ describe("fs", () => {
 		'files/jsonFileOne.json',
 		'files/jsonFileTwo.json',
 	]
-	.map(f => `${path}/${f}`)
+	.map(f => join(path, f))
 	.concat(testFiles)
 	.sort();
 

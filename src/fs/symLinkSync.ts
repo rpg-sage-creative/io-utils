@@ -1,6 +1,6 @@
 import { error } from "@rsc-utils/core-utils";
 import { mkdirSync, rmSync, symlinkSync } from "node:fs";
-import { toFilePath } from "./internal/toFilePath.js";
+import { dirname } from "node:path";
 
 type Options = { makeDir?:boolean; overwrite?:boolean; };
 
@@ -9,7 +9,8 @@ export function symLinkSync(original: string, link: string, options: Options): b
 export function symLinkSync(target: string, path: string, options?: Options): boolean {
 	try {
 		if (options?.makeDir) {
-			mkdirSync(toFilePath(path), { recursive:true });
+			const pathParent = dirname(path);
+			mkdirSync(pathParent, { recursive:true });
 		}
 	}catch(ex) {
 		error(ex);

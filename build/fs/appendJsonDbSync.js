@@ -1,17 +1,18 @@
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { fileExistsSync } from "./fileExistsSync.js";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
-import { toFilePath } from "./internal/toFilePath.js";
-export function appendJsonDbSync(filePathAndName, content, options) {
+export function appendJsonDbSync(filePath, content, options) {
     if (options?.makeDir) {
-        mkdirSync(toFilePath(filePathAndName), { recursive: true });
+        const dirPath = dirname(filePath);
+        mkdirSync(dirPath, { recursive: true });
     }
-    const exists = fileExistsSync(filePathAndName);
+    const exists = fileExistsSync(filePath);
     if (exists) {
-        appendFileSync(filePathAndName, "\n" + contentToFileOutput(content));
+        appendFileSync(filePath, "\n" + contentToFileOutput(content));
     }
     else {
-        writeFileSync(filePathAndName, contentToFileOutput(content));
+        writeFileSync(filePath, contentToFileOutput(content));
     }
     return true;
 }

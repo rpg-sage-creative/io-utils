@@ -166,8 +166,6 @@ function processResponse({ response, resolve, reject, progressTracker }: CreateS
 	try {
 		let rChunks: Buffer[] | null = [];
 
-		console.log(response.headers);
-
 		if ("content-length" in response.headers) {
 			const contentLength = +(response.headers["content-length"] ?? 0);
 			progressTracker?.start(contentLength);

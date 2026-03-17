@@ -92,7 +92,6 @@ function processResponse({ response, resolve, reject, progressTracker }) {
     let stream;
     try {
         let rChunks = [];
-        console.log(response.headers);
         if ("content-length" in response.headers) {
             const contentLength = +(response.headers["content-length"] ?? 0);
             progressTracker?.start(contentLength);

@@ -1,4 +1,4 @@
-import { stringifyJson, verbose, type Optional, type ProgressTracker } from "@rsc-utils/core-utils";
+import { stringifyJson, typeError, verbose, type Optional, type ProgressTracker } from "@rsc-utils/core-utils";
 import type { FollowResponse, RedirectableRequest } from "follow-redirects";
 import type { IncomingMessage } from "node:http";
 import { pipeline } from "node:stream";
@@ -30,7 +30,7 @@ export function getBuffer<T = any>(url: string, postData: T, opts?: Opts): Promi
 
 export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Promise<Buffer> {
 	if (typeof(url) !== "string") {
-		return Promise.reject(new TypeError("Invalid Url"));
+		return Promise.reject(typeError({ argKey:"url", mustBe:"a valid url string", value:url }));
 	}
 
 	const urlLower = url.toLowerCase();

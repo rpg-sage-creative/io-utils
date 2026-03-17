@@ -1,4 +1,4 @@
-import { stringifyJson, verbose } from "@rsc-utils/core-utils";
+import { stringifyJson, typeError, verbose } from "@rsc-utils/core-utils";
 import { pipeline } from "node:stream";
 import { createGunzip } from "node:zlib";
 import { fileExistsSync } from "../fs/fileExistsSync.js";
@@ -7,7 +7,7 @@ import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
 export function getBuffer(url, postData, opts) {
     if (typeof (url) !== "string") {
-        return Promise.reject(new TypeError("Invalid Url"));
+        return Promise.reject(typeError({ argKey: "url", mustBe: "a valid url string", value: url }));
     }
     const urlLower = url.toLowerCase();
     if (urlLower.startsWith("file://")) {

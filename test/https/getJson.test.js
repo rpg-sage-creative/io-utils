@@ -18,9 +18,9 @@ describe("https", () => {
 		test(tagLiterals`getJson(${urlSF1e}, ${dataSF1e})`, async () => {
 			const graphQlJson = await getJson(urlSF1e, dataSF1e, { logPercent:true });
 			expect(graphQlJson).toBeDefined();
-			const { data:{ characters:{ 0:{ json:raw } } } } = graphQlJson;
+			// const { data:{ characters:{ 0:{ json:raw } } } } = graphQlJson;
 			// console.log({raw});
-			const json = JSON.parse(raw);
+			// const json = JSON.parse(raw);
 			// console.log({json});
 		});
 

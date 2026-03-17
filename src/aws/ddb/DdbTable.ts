@@ -61,7 +61,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return true;
 	}
 
-	public async forEachAsync<T>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void> {
+	public async forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void> {
 		const args: ScanCommandInput = {
 			ExclusiveStartKey: undefined,
 			TableName: this.tableName,
@@ -90,7 +90,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 	}
 
 	/** returns the item in the table for the given id */
-	public async getById(id: Optional<Id>): Promise<Item | undefined> {
+	public async getById<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined> {
 		if (id) {
 			const command = new GetItemCommand({
 				TableName: this.tableName,
@@ -107,10 +107,10 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 	}
 
 	/** returns the items in the table for the given ids */
-	public async getByIds(ids: Optional<Id>[]): Promise<(Item | undefined)[]> {
+	public async getByIds<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]> {
 		const keys = ids.map(id => id ? ({ id, objectType:this.tableName }) : undefined);
 		const results = await this.repo.getBy<Id>(keys);
-		return results.values as (Item | undefined)[];
+		return results.values as (T | undefined)[];
 	}
 
 	/** checks the ddb table names to get correctly cased table name for this table */
@@ -120,7 +120,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return tableNames?.find(name => name.toLowerCase() === lower);
 	}
 
-	public async save(value: Optional<Item>): Promise<boolean> {
+	public async save<T extends Item = Item>(value: Optional<T>): Promise<boolean> {
 		if (value?.id) {
 			const command = new PutItemCommand({
 				TableName: this.tableName,

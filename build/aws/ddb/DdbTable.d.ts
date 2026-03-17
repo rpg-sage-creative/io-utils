@@ -15,13 +15,13 @@ export declare class DdbTable<Id extends RepoId = Snowflake, Item extends RepoIt
     drop(): Promise<boolean>;
     /** @deprecated ensures the table exists ... DEBUG / TEST ONLY */
     ensure(): Promise<boolean>;
-    forEachAsync<T>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void>;
+    forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void>;
     /** returns the item in the table for the given id */
-    getById(id: Optional<Id>): Promise<Item | undefined>;
+    getById<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined>;
     /** returns the items in the table for the given ids */
-    getByIds(ids: Optional<Id>[]): Promise<(Item | undefined)[]>;
+    getByIds<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]>;
     /** checks the ddb table names to get correctly cased table name for this table */
     protected getCasedTableName(): Promise<string | undefined>;
-    save(value: Optional<Item>): Promise<boolean>;
+    save<T extends Item = Item>(value: Optional<T>): Promise<boolean>;
 }
 export {};

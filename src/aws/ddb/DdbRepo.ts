@@ -137,7 +137,12 @@ export class DdbRepo {
 		return response?.TableNames;
 	}
 
-	public for(tableName: string): DdbTable {
+	public for<
+		Id extends RepoId = RepoId,
+		Item extends RepoItem<Id> = RepoItem<Id>
+	>(
+		tableName: string
+	): DdbTable<Id, Item> {
 		return new DdbTable(this, tableName);
 	}
 

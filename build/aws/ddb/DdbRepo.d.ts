@@ -28,7 +28,7 @@ export declare class DdbRepo {
     deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
     getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
     getTableNames(): Promise<string[] | undefined>;
-    for(tableName: string): DdbTable;
+    for<Id extends RepoId = RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(tableName: string): DdbTable<Id, Item>;
     saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>>;
     testConnection(): Promise<boolean>;
     /** Tests that a command can be sent successfully. If no client is given, then a client is created using DdbRepo.LocalstackTestConfig */

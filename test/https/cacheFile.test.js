@@ -1,6 +1,8 @@
-import { toLiteral } from "@rsc-utils/core-utils";
+import { enableLogLevels, tagLiterals } from "@rsc-utils/core-utils";
 import { existsSync, rmSync, statSync } from "fs";
 import { cacheFile } from "../../build/index.js";
+
+enableLogLevels("development");
 
 const filePath = "./invite-permission-list.jpg";
 
@@ -18,8 +20,10 @@ describe("https", () => {
 		const url = "https://rpgsage.io/images/docs/invite-permission-list.jpg";
 		const expectedFileSize = 21413;
 
-		test(`cacheFile(${toLiteral(url)})`, async () => {
-			const cached = await cacheFile(url, filePath);
+		const options = { url, filePath, logPercent:true };
+
+		test(tagLiterals`cacheFile(${options})`, async () => {
+			const cached = await cacheFile(options);
 			expect(cached).toBe(true);
 
 			const fileSize = statSync(filePath).size;

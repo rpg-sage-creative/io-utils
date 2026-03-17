@@ -97,8 +97,8 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 	};
 
 	try {
+
 		const protocol = getProtocol(url);
-		const method = postData ? "request" : "get";
 		const payload = postData ? stringifyJson(postData) : null;
 		const options = payload ? {
 			headers: {
@@ -107,9 +107,14 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 				"Accept-Encoding": "gzip",
 			},
 			method: "POST"
-		} : { };
+		} : {
+			headers: {
+				"Accept-Encoding": "gzip",
+			},
+			method: "GET"
+		};
 
-		verbose(`${options?.method ?? "GET"} ${url}`);
+		verbose(`${options.method} ${url}`);
 		if (options) {
 			verbose({options});
 		}
@@ -117,7 +122,8 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 			verbose({postData});
 		}
 
-		request = protocol[method](url, options, _response => {
+		const functionName = postData ? "request" : "get";
+		request = protocol[functionName](url, options, _response => {
 			response = _response;
 			stream = processResponse({ response, resolve, reject, progressTracker });
 		});
@@ -130,7 +136,7 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 		request.once("error", err => reject("request.error", err));
 		request.once("timeout", err => reject("request.timeout", err));
 
-		if (method === "request") {
+		if (payload) {
 			request.write(payload);
 		}
 
@@ -147,7 +153,7 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 type Response = IncomingMessage & FollowResponse;
 type Stream = (IncomingMessage & FollowResponse) | Gunzip;
 
-type CreateStreamArgs = {
+type ProcessResponseArgs = {
 	response: Response;
 	resolve: (buffer: Buffer) => void;
 	reject: (ev: string, err: unknown) => void;
@@ -160,7 +166,7 @@ type CreateStreamArgs = {
  * The stream is returned so that it can be cleaned up by errors outside the response.
  * @returns the original Response or a new gunzip Stream
  */
-function processResponse({ response, resolve, reject, progressTracker }: CreateStreamArgs): Stream | undefined {
+function processResponse({ response, resolve, reject, progressTracker }: ProcessResponseArgs): Stream | undefined {
 	let stream: Stream | undefined;
 
 	try {
@@ -205,7 +211,7 @@ function processResponse({ response, resolve, reject, progressTracker }: CreateS
 		);
 
 	}catch(ex) {
-		reject("try/catch (createStreamFromResponse)", ex);
+		reject("try/catch (processResponse)", ex);
 
 	}
 

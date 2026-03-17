@@ -51,7 +51,6 @@ export function getBuffer(url, postData, opts) {
     };
     try {
         const protocol = getProtocol(url);
-        const method = postData ? "request" : "get";
         const payload = postData ? stringifyJson(postData) : null;
         const options = payload ? {
             headers: {
@@ -60,15 +59,21 @@ export function getBuffer(url, postData, opts) {
                 "Accept-Encoding": "gzip",
             },
             method: "POST"
-        } : {};
-        verbose(`${options?.method ?? "GET"} ${url}`);
+        } : {
+            headers: {
+                "Accept-Encoding": "gzip",
+            },
+            method: "GET"
+        };
+        verbose(`${options.method} ${url}`);
         if (options) {
             verbose({ options });
         }
         if (postData) {
             verbose({ postData });
         }
-        request = protocol[method](url, options, _response => {
+        const functionName = postData ? "request" : "get";
+        request = protocol[functionName](url, options, _response => {
             response = _response;
             stream = processResponse({ response, resolve, reject, progressTracker });
         });
@@ -78,7 +83,7 @@ export function getBuffer(url, postData, opts) {
         request.once("close", err => reject("request.close", err));
         request.once("error", err => reject("request.error", err));
         request.once("timeout", err => reject("request.timeout", err));
-        if (method === "request") {
+        if (payload) {
             request.write(payload);
         }
         request.end();
@@ -120,7 +125,7 @@ function processResponse({ response, resolve, reject, progressTracker }) {
         stream.once("error", (err) => reject("stream.error", err));
     }
     catch (ex) {
-        reject("try/catch (createStreamFromResponse)", ex);
+        reject("try/catch (processResponse)", ex);
     }
     return stream;
 }

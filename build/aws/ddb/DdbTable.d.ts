@@ -1,4 +1,4 @@
-import { type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import { type Awaitable, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 type RepoId = Snowflake | UUID;
 type RepoItem<Id extends RepoId = Snowflake> = {
@@ -15,6 +15,7 @@ export declare class DdbTable<Id extends RepoId = Snowflake, Item extends RepoIt
     drop(): Promise<boolean>;
     /** @deprecated ensures the table exists ... DEBUG / TEST ONLY */
     ensure(): Promise<boolean>;
+    forEachAsync<T>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void>;
     /** returns the item in the table for the given id */
     getById(id: Optional<Id>): Promise<Item | undefined>;
     /** returns the items in the table for the given ids */

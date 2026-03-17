@@ -145,6 +145,8 @@ export class DdbRepo {
 		let errorCount = 0;
 		const unprocessed: Item[] = [];
 
+		const client = this.getClient();
+
 		const { BatchPutMaxItemCount } = DdbRepo;
 		const batches = partition(values, (_, index) => Math.floor(index / BatchPutMaxItemCount));
 		for (const batch of batches) {
@@ -152,7 +154,7 @@ export class DdbRepo {
 			batch.forEach(value => {
 				// double check we have a valid id / type
 				if (value.id && value.objectType) {
-					const tableItem = RequestItems[value.objectType] ?? (RequestItems[value.objectType] = []);
+					const tableItem = RequestItems[value.objectType] ??= [];
 					tableItem.push({ PutRequest:{ Item:serialize(value).M! } });
 				}else {
 					warn(`Invalid Value: DdbRepo.saveAll(${toLiteral(value)})`);
@@ -160,7 +162,7 @@ export class DdbRepo {
 			});
 
 			const command = new BatchWriteItemCommand({ RequestItems });
-			const response = await this.getClient().send(command).catch(errorReturnUndefined);
+			const response = await client.send(command).catch(errorReturnUndefined);
 			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
 			if (response?.UnprocessedItems) {
 				Object.keys(response.UnprocessedItems).forEach(objectType => {

@@ -1,5 +1,5 @@
-import { CreateTableCommand, DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
-import { errorReturnUndefined, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import { CreateTableCommand, DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand, type ScanCommandInput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
+import { errorReturnUndefined, type Awaitable, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
@@ -59,6 +59,34 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 			return response?.TableDescription?.TableName === this.tableName;
 		}
 		return true;
+	}
+
+	public async forEachAsync<T>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void> {
+		const args: ScanCommandInput = {
+			ExclusiveStartKey: undefined,
+			TableName: this.tableName,
+		};
+
+		let index = -1;
+		const array: T[] = [];
+
+		const client = this.repo.getClient();
+		let results: ScanCommandOutput | undefined;
+		do {
+
+			results = await client.scan(args).catch(errorReturnUndefined);
+			if (results?.$metadata.httpStatusCode !== 200) break;
+
+			const items = results.Items ?? [];
+			for (const item of items) {
+				index++;
+				await callbackfn.call(thisArg, deserializeObject(item), index, array);
+			}
+
+			args.ExclusiveStartKey = results.LastEvaluatedKey;
+
+		}while(results.LastEvaluatedKey !== undefined);
+
 	}
 
 	/** returns the item in the table for the given id */

@@ -183,6 +183,16 @@ describe("ddb", () => {
 				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetAllResults);
 			}, timeout);
 
+
+			for (const objectType of objectTypes) {
+				test(tagLiterals`DdbTable.for(${objectType}).forEach()`, async () => {
+					const objectIds = jsonObjects.map(o => o.id);
+					await ddbRepo.for(objectType).forEachAsync(async (value, index, array) => {
+						expect(objectIds.includes(value.id)).toBe(true);
+					});
+				});
+			}
+
 			test(`DdbRepo.getBy`, async () => {
 				// reverse list and fetch
 				const reversedKeys = idKeys.slice().reverse();

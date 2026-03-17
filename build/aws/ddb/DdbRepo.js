@@ -102,13 +102,14 @@ export class DdbRepo {
     async saveAll(values) {
         let errorCount = 0;
         const unprocessed = [];
+        const client = this.getClient();
         const { BatchPutMaxItemCount } = DdbRepo;
         const batches = partition(values, (_, index) => Math.floor(index / BatchPutMaxItemCount));
         for (const batch of batches) {
             const RequestItems = {};
             batch.forEach(value => {
                 if (value.id && value.objectType) {
-                    const tableItem = RequestItems[value.objectType] ?? (RequestItems[value.objectType] = []);
+                    const tableItem = RequestItems[value.objectType] ??= [];
                     tableItem.push({ PutRequest: { Item: serialize(value).M } });
                 }
                 else {
@@ -116,7 +117,7 @@ export class DdbRepo {
                 }
             });
             const command = new BatchWriteItemCommand({ RequestItems });
-            const response = await this.getClient().send(command).catch(errorReturnUndefined);
+            const response = await client.send(command).catch(errorReturnUndefined);
             if (response?.$metadata.httpStatusCode !== 200)
                 errorCount++;
             if (response?.UnprocessedItems) {

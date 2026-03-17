@@ -51,6 +51,27 @@ export class DdbTable {
         }
         return true;
     }
+    async forEachAsync(callbackfn, thisArg) {
+        const args = {
+            ExclusiveStartKey: undefined,
+            TableName: this.tableName,
+        };
+        let index = -1;
+        const array = [];
+        const client = this.repo.getClient();
+        let results;
+        do {
+            results = await client.scan(args).catch(errorReturnUndefined);
+            if (results?.$metadata.httpStatusCode !== 200)
+                break;
+            const items = results.Items ?? [];
+            for (const item of items) {
+                index++;
+                await callbackfn.call(thisArg, deserializeObject(item), index, array);
+            }
+            args.ExclusiveStartKey = results.LastEvaluatedKey;
+        } while (results.LastEvaluatedKey !== undefined);
+    }
     async getById(id) {
         if (id) {
             const command = new GetItemCommand({

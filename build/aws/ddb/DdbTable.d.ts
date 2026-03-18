@@ -1,27 +1,27 @@
-import { type Awaitable, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import { type Awaitable, type Optional } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
-type RepoId = Snowflake | UUID;
-type RepoItem<Id extends RepoId = Snowflake> = {
-    id: Id;
-    objectType: string;
-};
-export declare class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = RepoItem<Id>> {
+import { type BatchDeleteResults, type BatchWriteResults, type IdResolvable, type RepoId, type RepoItem } from "./types.js";
+export declare class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = RepoItem<Id>> {
     repo: DdbRepo;
     tableName: string;
     constructor(repo: DdbRepo, tableName: string);
     /** deletes the item in the table for the given id */
-    deleteById(id: Optional<Id>): Promise<boolean>;
-    /** @deprecated drops the table if it exists ... DEBUG / TEST ONLY */
+    delete(id: Optional<IdResolvable<Id>>): Promise<boolean>;
+    deleteAll(ids: Optional<IdResolvable<Id>>[]): Promise<BatchDeleteResults<RepoId>>;
+    /** @deprecated @intrernal drops the table if it exists ... DEBUG / TEST ONLY */
     drop(): Promise<boolean>;
-    /** @deprecated ensures the table exists ... DEBUG / TEST ONLY */
+    /** @deprecated @intrernal ensures the table exists ... DEBUG / TEST ONLY */
     ensure(): Promise<boolean>;
+    /** uses ScanCommandOutput to iterate over every item in the table */
     forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void>;
     /** returns the item in the table for the given id */
-    getById<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined>;
+    get<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined>;
     /** returns the items in the table for the given ids */
-    getByIds<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]>;
+    getAll<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]>;
     /** checks the ddb table names to get correctly cased table name for this table */
     protected getCasedTableName(): Promise<string | undefined>;
+    /** saves the item given to the table */
     save<T extends Item = Item>(value: Optional<T>): Promise<boolean>;
+    /** saves all the items given to the table */
+    saveAll<T extends Item = Item>(values: T[]): Promise<BatchWriteResults<T>>;
 }
-export {};

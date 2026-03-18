@@ -3,6 +3,7 @@ import { errorReturnUndefined } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
+import { resolveId } from "./types.js";
 export class DdbTable {
     repo;
     tableName;
@@ -10,7 +11,8 @@ export class DdbTable {
         this.repo = repo;
         this.tableName = tableName;
     }
-    async deleteById(id) {
+    async delete(id) {
+        id = resolveId(id);
         if (id) {
             const command = new DeleteItemCommand({
                 TableName: this.tableName,
@@ -20,6 +22,9 @@ export class DdbTable {
             return response?.$metadata.httpStatusCode === 200;
         }
         return false;
+    }
+    async deleteAll(ids) {
+        return this.repo.deleteAll(ids, this.tableName);
     }
     async drop() {
         const TableName = await this.getCasedTableName();
@@ -72,22 +77,22 @@ export class DdbTable {
             args.ExclusiveStartKey = results.LastEvaluatedKey;
         } while (results.LastEvaluatedKey !== undefined);
     }
-    async getById(id) {
+    async get(id) {
         if (id) {
             const command = new GetItemCommand({
                 TableName: this.tableName,
                 Key: { id: serialize(id) }
             });
-            const response = await this.repo.getClient().send(command).catch(errorReturnUndefined);
+            const client = this.repo.getClient();
+            const response = await client.send(command).catch(errorReturnUndefined);
             if (response?.Item) {
                 return deserializeObject(response.Item);
             }
         }
         return undefined;
     }
-    async getByIds(ids) {
-        const keys = ids.map(id => id ? ({ id, objectType: this.tableName }) : undefined);
-        const results = await this.repo.getBy(keys);
+    async getAll(ids) {
+        const results = await this.repo.getAll(ids, this.tableName);
         return results.values;
     }
     async getCasedTableName() {
@@ -105,5 +110,8 @@ export class DdbTable {
             return response?.$metadata.httpStatusCode === 200;
         }
         return false;
+    }
+    async saveAll(values) {
+        return this.repo.saveAll(values, this.tableName);
     }
 }

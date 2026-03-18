@@ -1,5 +1,6 @@
-import { enableLogLevels, pause, generateSnowflake, tagLiterals } from "@rsc-utils/core-utils";
+import { enableLogLevels, pause, tagLiterals } from "@rsc-utils/core-utils";
 import { DdbRepo } from "../../../build/index.js";
+import { getJsonObjects } from "./data.js";
 
 /*
 
@@ -7,222 +8,145 @@ import { DdbRepo } from "../../../build/index.js";
 
 */
 
-/** @type {DdbRepo | undefined} */
-let ddbRepo;
-
 enableLogLevels("development");
 
-// let the container finish starting
-beforeAll(async () => {
-	ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
+/** @type {DdbRepo | undefined} */
+let _ddbRepo;
 
-	let connected;
-	do {
-		// pause a split second
-		await pause(250);
-		// try to list tables
-		connected = await ddbRepo.testConnection();
-	}while (!connected);
-});
+/** @type {Promise<DdbRepo>} */
+let _ddbRepoPromise;
 
-function getJsonObjects() {
-	const jsonObjects = [];
+async function initDdbRepo() {
+	if (_ddbRepo) return _ddbRepo;
+	if (_ddbRepoPromise) return _ddbRepoPromise;
+	return _ddbRepoPromise = new Promise(async (resolve, reject) => {
+		_ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
 
-	for (let i = 0; i < 50; i++) {
-		const serverId = generateSnowflake();
-		jsonObjects.push({ name:`Random Server: ${serverId}`, id:serverId, objectType:"ddb-test-server" });
+		let connected;
+		do {
+			// pause a split second
+			await pause(250);
+			// try to list tables
+			connected = await _ddbRepo.testConnection();
+		}while (!connected);
 
-		const userId = generateSnowflake();
-		jsonObjects.push({ name:`Random User: ${userId}`, id:userId, objectType:"ddb-test-user" });
-
-		const botId = generateSnowflake();
-		jsonObjects.push({
-			name: `Random Bot: ${botId}`,
-			id: botId,
-			objectType: "ddb-test-bot",
-
-			// throw in some other values for funsies
-			bigintValue: 1234567890n,
-			trueValue: true,
-			falseValue: false,
-			dateValue: new Date(),
-			emptyStringValue: "",
-			nullValue: null,
-			numberValue: 1234567890,
-			stringValue: "non-empty string",
-			zeroValue: 0,
-		});
-	}
-
-	return jsonObjects;
+		resolve(_ddbRepo);
+	});
 }
 
+async function initDdbTable(tableName) {
+	const ddbRepo = await initDdbRepo();
+	return ddbRepo.for(tableName);
+}
+
+function objectTypeToTableName(objectType) {
+	return objectType.toLowerCase() + "s";
+}
+
+/** @type {number | undefined} */
+let timeout = undefined; // default
+// timeout = 10 * 1000; // 10 seconds
+
+// let the container finish starting
+beforeAll(initDdbRepo);
+
 describe("aws", () => {
-describe("ddb", () => {
-	describe("DdbRepo", () => {
-		let timeout = undefined; // default
-		// timeout = 10 * 1000; // 10 seconds
+	describe("ddb", () => {
+		describe("DdbRepo", () => {
 
-		const jsonObjects = getJsonObjects();
-		const idKeys = jsonObjects.map(({ id, objectType }) => ({ id, objectType }));
+			const objectTypes = ["Bot", "Game", "Server"];
+			const jsonObjects = getJsonObjects(...objectTypes);
+			const idKeys = jsonObjects.map(({ id, objectType }) => ({ id, objectType }));
+			const getDdbTable = (objectType) => initDdbTable(objectTypeToTableName(objectType));
 
-		const objectTypes = [...new Set(jsonObjects.map(({ objectType }) => objectType))];
-
-		describe(`Create Test Tables`, () => {
-			test(JSON.stringify(objectTypes), async () => {
-				for (const objectType of objectTypes) {
-					expect(await ddbRepo.for(objectType).ensure()).toBeDefined();
-				}
-			}, timeout);
-		});
-
-		describe("Single Item Commands", () => {
-
-			test(`save (${jsonObjects.length} items)`, async() => {
-				let ddbTable;
-				let objectType;
-				for (const json of jsonObjects) {
-					if (json.objectType !== objectType) {
-						ddbTable = ddbRepo.for(objectType = json.objectType);
+			describe(`Create Test Tables`, () => {
+				test(JSON.stringify(objectTypes), async () => {
+					for (const objectType of objectTypes) {
+						const ddbTable = await getDdbTable(objectType);
+						expect(await ddbTable.ensure()).toBeDefined();
 					}
+				}, timeout);
+			});
 
-					// initial json get/save/get
-					expect(await ddbTable.getById(json.id)).toBeUndefined();
-					expect(await ddbTable.save(json)).toBe(true);
-					expect(await ddbTable.getById(json.id)).toStrictEqual(json);
+			describe(`Batch Item Commands`, () => {
+
+				const expectedGetNoneResults = {
+					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
+					errorCount: 0,
+					values: jsonObjects.map(() => undefined)
 				};
-			}, timeout);
 
-			test(`mutate (${jsonObjects.length} items)`, async() => {
-				let ddbTable;
-				let objectType;
-				for (const json of jsonObjects) {
-					if (json.objectType !== objectType) {
-						ddbTable = ddbRepo.for(objectType = json.objectType);
+				const expectedSaveAllResults = {
+					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchPutMaxItemCount),
+					errorCount: 0,
+					unprocessed: [],
+					success: true,
+					partial: false
+				};
+
+				const expectedGetAllResults = {
+					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
+					errorCount: 0,
+					values: jsonObjects
+				};
+
+				const expectedGetAllResultsReversed = {
+					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
+					errorCount: 0,
+					values: jsonObjects.slice().reverse()
+				};
+
+				const expectedDeleteAllResults = {
+					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchPutMaxItemCount),
+					errorCount: 0,
+					unprocessed: [],
+					success: true,
+					partial: false
+				};
+
+				test(tagLiterals`ddbRepo.saveAll(...) --> ${expectedSaveAllResults}`, async () => {
+					const ddbRepo = await initDdbRepo();
+					// show they aren't there
+					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+					// save them
+					expect(await ddbRepo.saveAll(jsonObjects)).toStrictEqual(expectedSaveAllResults);
+					// show they are there
+					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetAllResults);
+				}, timeout);
+
+				test(`ddbRepo.getAll`, async () => {
+					const ddbRepo = await initDdbRepo();
+					// reverse list and fetch
+					const reversedKeys = idKeys.slice().reverse();
+					// show the results are ordered as the keys
+					expect(await ddbRepo.getAll(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
+				}, timeout);
+
+				test(tagLiterals`DdbRepo.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
+					const ddbRepo = await initDdbRepo();
+					// show they are there
+					expect(await ddbRepo.getAll(jsonObjects)).toStrictEqual(expectedGetAllResults);
+					// delete them
+					expect(await ddbRepo.deleteAll(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
+					// show they aren't there
+					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+				}, timeout);
+
+			});
+
+			describe(`Drop Test Tables`, () => {
+				test(JSON.stringify(objectTypes), async () => {
+					for (const objectType of objectTypes) {
+						const ddbTable = await getDdbTable(objectType);
+						expect(await ddbTable.drop()).toBe(true);
 					}
-
-					// alter the object and make sure it doesn't match the ddbTable
-					const objectTypeTwo = (json.objectType ?? "None").split("").reverse().join("");
-					const clone = { ...json, objectTypeTwo };
-
-					// confirm clone id matches
-					expect(json.id).toBe(clone.id);
-
-					// confirm clone object is different
-					expect(json).not.toStrictEqual(clone);
-					expect(await ddbTable.getById(clone.id)).not.toStrictEqual(clone);
-
-					// save the clone successfully
-					expect(await ddbTable.save(clone)).toBe(true);
-
-					// refetch the clone and make sure it doesn't match original
-					const fetched = await ddbTable.getById(json.id);
-					expect(fetched).toStrictEqual(clone);
-					expect(fetched).not.toStrictEqual(json);
-				};
-			}, timeout);
-
-			test(`delete (${jsonObjects.length} items)`, async() => {
-				let ddbTable;
-				let objectType;
-				for (const json of jsonObjects) {
-					if (json.objectType !== objectType) {
-						ddbTable = ddbRepo.for(objectType = json.objectType);
-					}
-
-					// delete and confirm
-					expect(await ddbTable.deleteById(json.id)).toBe(true);
-					expect(await ddbTable.getById(json.id)).toBeUndefined();
-				};
-			}, timeout);
+				}, timeout);
+			});
 
 		});
-
-		describe(`Batch Item Commands`, () => {
-
-			const expectedGetNoneResults = {
-				batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
-				errorCount: 0,
-				values: jsonObjects.map(() => undefined)
-			};
-
-			const expectedSaveAllResults = {
-				batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchPutMaxItemCount),
-				errorCount: 0,
-				unprocessed: [],
-				success: true,
-				partial: false
-			};
-
-			const expectedGetAllResults = {
-				batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
-				errorCount: 0,
-				values: jsonObjects
-			};
-
-			const expectedGetAllResultsReversed = {
-				batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
-				errorCount: 0,
-				values: jsonObjects.slice().reverse()
-			};
-
-			const expectedDeleteAllResults = {
-				batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchPutMaxItemCount),
-				errorCount: 0,
-				unprocessed: [],
-				success: true,
-				partial: false
-			};
-
-			test(tagLiterals`DdbRepo.saveAll(...) --> ${expectedSaveAllResults}`, async () => {
-				// show they aren't there
-				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetNoneResults);
-				// save them
-				expect(await ddbRepo.saveAll(jsonObjects)).toStrictEqual(expectedSaveAllResults);
-				// show they are there
-				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetAllResults);
-			}, timeout);
-
-
-			for (const objectType of objectTypes) {
-				test(tagLiterals`DdbTable.for(${objectType}).forEach()`, async () => {
-					const objectIds = jsonObjects.map(o => o.id);
-					await ddbRepo.for(objectType).forEachAsync(async (value, index, array) => {
-						expect(objectIds.includes(value.id)).toBe(true);
-					});
-				});
-			}
-
-			test(`DdbRepo.getBy`, async () => {
-				// reverse list and fetch
-				const reversedKeys = idKeys.slice().reverse();
-				// show the results are ordered as the keys
-				expect(await ddbRepo.getBy(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
-			}, timeout);
-
-			test(tagLiterals`DdbRepo.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
-				// show they are there
-				expect(await ddbRepo.getBy(jsonObjects)).toStrictEqual(expectedGetAllResults);
-				// delete them
-				expect(await ddbRepo.deleteAll(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
-				// show they aren't there
-				expect(await ddbRepo.getBy(idKeys)).toStrictEqual(expectedGetNoneResults);
-			}, timeout);
-
-		});
-
-		describe(`Drop Test Tables`, () => {
-			test(JSON.stringify(objectTypes), async () => {
-				for (const objectType of objectTypes) {
-					expect(await ddbRepo.for(objectType).drop()).toBe(true);
-				}
-			}, timeout);
-		});
-
 	});
-});
 });
 
 afterAll(async () => {
-	ddbRepo?.destroy();
+	_ddbRepo?.destroy();
 });

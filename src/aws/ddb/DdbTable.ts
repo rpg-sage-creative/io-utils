@@ -1,18 +1,16 @@
 import { CreateTableCommand, DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand, type ScanCommandInput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
-import { errorReturnUndefined, type Awaitable, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import { errorReturnUndefined, type Awaitable, type Optional } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
+import { resolveId, type BatchDeleteResults, type BatchWriteResults, type IdResolvable, type RepoId, type RepoItem } from "./types.js";
 
-type RepoId = Snowflake | UUID;
-
-type RepoItem<Id extends RepoId = Snowflake> = { id:Id; objectType:string; };
-
-export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> = RepoItem<Id>> {
+export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = RepoItem<Id>> {
 	public constructor(public repo: DdbRepo, public tableName: string) { }
 
 	/** deletes the item in the table for the given id */
-	public async deleteById(id: Optional<Id>): Promise<boolean> {
+	public async delete(id: Optional<IdResolvable<Id>>): Promise<boolean> {
+		id = resolveId(id);
 		if (id) {
 			const command = new DeleteItemCommand({
 				TableName: this.tableName,
@@ -27,7 +25,11 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return false;
 	}
 
-	/** @deprecated drops the table if it exists ... DEBUG / TEST ONLY */
+	public async deleteAll(ids: Optional<IdResolvable<Id>>[]): Promise<BatchDeleteResults<RepoId>> {
+		return this.repo.deleteAll(ids as Optional<Id>[], this.tableName);
+	}
+
+	/** @deprecated @intrernal drops the table if it exists ... DEBUG / TEST ONLY */
 	public async drop(): Promise<boolean> {
 		const TableName = await this.getCasedTableName();
 		if (TableName) {
@@ -38,7 +40,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return false;
 	}
 
-	/** @deprecated ensures the table exists ... DEBUG / TEST ONLY */
+	/** @deprecated @intrernal ensures the table exists ... DEBUG / TEST ONLY */
 	public async ensure(): Promise<boolean> {
 		const existing = await this.getCasedTableName();
 		if (!existing) {
@@ -61,6 +63,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return true;
 	}
 
+	/** uses ScanCommandOutput to iterate over every item in the table */
 	public async forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void> {
 		const args: ScanCommandInput = {
 			ExclusiveStartKey: undefined,
@@ -90,14 +93,17 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 	}
 
 	/** returns the item in the table for the given id */
-	public async getById<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined> {
+	public async get<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined> {
 		if (id) {
 			const command = new GetItemCommand({
 				TableName: this.tableName,
 				Key: { id: serialize(id) }
 			});
 
-			const response = await this.repo.getClient().send(command).catch(errorReturnUndefined);
+			const client = this.repo.getClient();
+
+			const response = await client.send(command).catch(errorReturnUndefined);
+
 			if (response?.Item) {
 				return deserializeObject(response.Item);
 			}
@@ -107,10 +113,9 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 	}
 
 	/** returns the items in the table for the given ids */
-	public async getByIds<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]> {
-		const keys = ids.map(id => id ? ({ id, objectType:this.tableName }) : undefined);
-		const results = await this.repo.getBy<Id>(keys);
-		return results.values as (T | undefined)[];
+	public async getAll<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]> {
+		const results = await this.repo.getAll(ids, this.tableName);
+		return results.values as T[];
 	}
 
 	/** checks the ddb table names to get correctly cased table name for this table */
@@ -120,6 +125,7 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return tableNames?.find(name => name.toLowerCase() === lower);
 	}
 
+	/** saves the item given to the table */
 	public async save<T extends Item = Item>(value: Optional<T>): Promise<boolean> {
 		if (value?.id) {
 			const command = new PutItemCommand({
@@ -135,4 +141,8 @@ export class DdbTable<Id extends RepoId = Snowflake, Item extends RepoItem<Id> =
 		return false;
 	}
 
+	/** saves all the items given to the table */
+	public async saveAll<T extends Item = Item>(values: T[]): Promise<BatchWriteResults<T>> {
+		return this.repo.saveAll(values, this.tableName) as Promise<BatchWriteResults<T>>;
+	}
 }

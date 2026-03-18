@@ -1,36 +1,42 @@
-import { BatchGetItemCommand, BatchWriteItemCommand, DynamoDB, ListTablesCommand, type AttributeValue } from "@aws-sdk/client-dynamodb";
-import { errorReturnUndefined, partition, toLiteral, warn, type Optional, type Snowflake, type UUID } from "@rsc-utils/core-utils";
+import { BatchGetItemCommand, BatchWriteItemCommand, DynamoDB, ListTablesCommand } from "@aws-sdk/client-dynamodb";
+import { errorReturnUndefined, tagLiterals, warn, type Optional } from "@rsc-utils/core-utils";
 import type { VALID_URL } from "../../url/types.js";
 import type { AwsRegion } from "../AwsRegion.js";
 import type { DdbClientConfig } from "./DdbClientConfig.js";
+import { DdbTable } from "./DdbTable.js";
 import { deserializeObject } from "./internal/deserialize.js";
 import { serialize } from "./internal/serialize.js";
-import { DdbTable } from "./DdbTable.js";
+import { splitIntoBatches } from "./internal/splitIntoBatches.js";
+import { resolveId, type BatchDeleteResults, type BatchGetRequestItems, type BatchGetResults, type BatchWriteRequestItems, type BatchWriteResults, type IdResolvable, type RepoId, type RepoItem, type TableNameParser, type UnprocessedItem } from "./types.js";
 
 /*
  * 400 KB max json size in DDB
  */
 
-type RepoId = Snowflake | UUID;
-type RepoItem<Id extends RepoId = Snowflake> = { id:Id; objectType:string; };
-type BatchGetRequestItems = Record<string, { Keys:{ id:AttributeValue; }[] }>;
-type BatchWriteRequestItems = Record<string, { PutRequest?:{ Item:Record<string, AttributeValue>; }; DeleteRequest?:{ Key: { id:AttributeValue; }; }; }[]>;
 
-type BatchGetResults<Item extends RepoItem<any>> = {
-	batchCount: number;
-	errorCount: number;
-	values: (Item | undefined)[];
-};
-type BatchResults<Item extends RepoItem> = {
-	batchCount: number;
-	errorCount: number;
-	unprocessed: Item[];
-	success: boolean;
-	partial: boolean;
+type DDbRepoOptions = {
+	batchGetMaxItemCount?: number;
+	batchPutMaxItemCount?: number;
+	itemToTableName?: TableNameParser;
 };
 
-export class DdbRepo {
-	public constructor(public config: DdbClientConfig) { }
+export class DdbRepo<
+	Id extends RepoId = RepoId,
+	Item extends RepoItem<Id> = RepoItem<Id>,
+> {
+	public readonly batchGetMaxItemCount: number;
+	public readonly batchPutMaxItemCount: number;
+	public readonly itemToTableName: TableNameParser<Id, RepoItem<Id>>;
+
+	public constructor(public config: DdbClientConfig, options?: DDbRepoOptions) {
+		const batchGetMaxItemCount = options?.batchGetMaxItemCount ?? DdbRepo.BatchGetMaxItemCount;
+		this.batchGetMaxItemCount = Math.max(0, Math.min(batchGetMaxItemCount, DdbRepo.BatchGetMaxItemCount));
+
+		const batchPutMaxItemCount = options?.batchPutMaxItemCount ?? DdbRepo.BatchPutMaxItemCount
+		this.batchPutMaxItemCount = Math.max(0, Math.min(batchPutMaxItemCount, DdbRepo.BatchPutMaxItemCount));
+
+		this.itemToTableName = options?.itemToTableName ?? DdbRepo.ItemToTableName;
+	}
 
 	private client?: DynamoDB;
 	public getClient(): DynamoDB {
@@ -42,34 +48,58 @@ export class DdbRepo {
 		delete this.client;
 	}
 
-	public async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>> {
+	/**
+	 * Attempts to delete all the given items from their appropriate tables.
+	 */
+	public async deleteAll(keys: Optional<Item>[]): Promise<BatchDeleteResults<Id>>;
+	public async deleteAll(keys: Optional<IdResolvable>[], tableName: string): Promise<BatchDeleteResults<Id>>;
+	public async deleteAll(keys: Optional<IdResolvable<Id>>[], ddbTableName?: string): Promise<BatchDeleteResults<Id>> {
 		let errorCount = 0;
-		const unprocessed: RepoItem[] = [];
 
-		const { BatchPutMaxItemCount } = DdbRepo;
-		const batches = partition(keys, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+		const unprocessed: UnprocessedItem<Id>[] = [];
+
+		const client = this.getClient();
+
+		const itemToTableName = ddbTableName
+			? () => ddbTableName
+			: this.itemToTableName as (key: Optional<IdResolvable<Id>>) => string;
+
+		const batches = splitIntoBatches(keys, this.batchPutMaxItemCount);
+
 		for (const batch of batches) {
 			const RequestItems: BatchWriteRequestItems = { };
-			batch.forEach(key => {
-				// double check we have a valid id / type
-				if (key?.id && key.objectType) {
-					const tableItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = []);
-					tableItem.push({ DeleteRequest:{ Key:{ id:serialize(key.id) } } });
+
+			for (const key of batch) {
+				/** @todo why am i allowing keys/ids to be optional ? */
+				const id = typeof(key) === "string" ? key : key?.id;
+				if (id) {
+
+					const keyTableName = itemToTableName(key);
+					const tableItems = RequestItems[keyTableName] ??= [];
+
+					tableItems.push({ DeleteRequest:{ Key:{ id:serialize(id) } } });
+
 				}else {
-					warn(`Invalid Value: DdbRepo.deleteAll(${toLiteral(key)})`);
+					warn(tagLiterals`Invalid Value: DdbRepo.deleteAll(${key})`);
 				}
-			});
+			}
 
 			const command = new BatchWriteItemCommand({ RequestItems });
-			const response = await this.getClient().send(command).catch(errorReturnUndefined);
-			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
+			const response = await client.send(command).catch(errorReturnUndefined);
+
+			if (response?.$metadata.httpStatusCode !== 200) {
+				errorCount++;
+			}
+
 			if (response?.UnprocessedItems) {
-				Object.keys(response.UnprocessedItems).forEach(objectType => {
-					response.UnprocessedItems?.[objectType]?.forEach(({DeleteRequest}) => {
-						const id = deserializeObject<RepoItem>(DeleteRequest?.Key!).id;
-						unprocessed.push({ id, objectType });
+
+				Object.entries(response.UnprocessedItems).forEach(([tableName, writeRequests]) => {
+					writeRequests.forEach(({ DeleteRequest }) => {
+						const id = deserializeObject<Item>(DeleteRequest?.Key!).id;
+						unprocessed.push({ id, tableName });
 					});
 				});
+
 			}
 		}
 
@@ -83,43 +113,70 @@ export class DdbRepo {
 		};
 	}
 
-	public async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>> {
+	/**
+	 * Uses BatchGetItemCommand to retrieve the items for all the given keys.
+	 * If needed, multiple batches will be used.
+	 * The fetched results are sorted and returned in the order their keys were given.
+	 * Any keys that didnt't get a results are returned as undefined.
+	 */
+	public async getAll(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
+	public async getAll(keys: Optional<IdResolvable>[], tableName: string): Promise<BatchGetResults<Item>>;
+	public async getAll(keys: Optional<IdResolvable>[], ddbTableName?: string): Promise<BatchGetResults<Item>> {
 		let errorCount = 0;
 
 		const values: (Item | undefined)[] = [];
 
-		const { BatchGetMaxItemCount } = DdbRepo;
-		const batches = partition(keys, (_, index) => Math.floor(index / BatchGetMaxItemCount));
+		const client = this.getClient();
+
+		const itemToTableName = ddbTableName
+			? () => ddbTableName
+			: this.itemToTableName as (key: Optional<IdResolvable>) => string;
+
+		const batches = splitIntoBatches(keys, this.batchGetMaxItemCount);
+
 		for (const batch of batches) {
-
-			// make by hand to use key.objectType as table name
 			const RequestItems: BatchGetRequestItems = { };
-			batch.forEach(key => {
-				// double check we have a valid id
-				if (key?.id && key.objectType) {
-					const keyItem = RequestItems[key.objectType] ?? (RequestItems[key.objectType] = { Keys:[] });
-					keyItem.Keys.push({ id:serialize(key.id) });
-				}else {
-					warn(`Invalid Key: DdbRepo.getBy(${toLiteral(key)})`);
-				}
-			});
 
-			// send the request
+			for (const key of batch) {
+				/** @todo why am i allowing keys/ids to be optional ? */
+				const id = resolveId(key);
+				if (id) {
+
+					const keyTableName = itemToTableName(key);
+					const keyItem = RequestItems[keyTableName] ??= { Keys:[] };
+
+					keyItem.Keys.push({ id:serialize(id) });
+
+				}else {
+					warn(tagLiterals`Invalid Value: DdbRepo.getAll(${key})`);
+				}
+			}
+
 			const command = new BatchGetItemCommand({ RequestItems });
-			const response = await this.getClient().send(command).catch(errorReturnUndefined);
-			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
+			const response = await client.send(command).catch(errorReturnUndefined);
+
+			if (response?.$metadata.httpStatusCode !== 200) {
+				errorCount++;
+			}
+
 			if (response?.Responses) {
 
-				// deserialize items
-				const batchItems = Object.keys(response.Responses).reduce((map, objectType) => {
-					map.set(objectType, response.Responses![objectType]!.map(deserializeObject) as Item[]);
-					return map;
-				}, new Map<string, (Item | undefined)[]>());
+				const itemMap = new Map<string, (Item | undefined)[]>();
+				Object.entries(response.Responses).forEach(([tableName, serialized]) => {
+					itemMap.set(tableName, serialized.map(deserializeObject) as Item[]);
+				});
 
 				// return the items in the order in which they were requested
 				batch.forEach(key => {
-					values.push(key?.id ? batchItems.get(key.objectType)?.find(item => item?.id === key.id) : undefined);
+					let item: Item | undefined;
+					const id = resolveId(key);
+					if (id) {
+						const tableName = itemToTableName(key);
+						item = itemMap.get(tableName)?.find(item => resolveId(item) === id);
+					}
+					values.push(item);
 				});
+
 			}
 		}
 
@@ -143,38 +200,56 @@ export class DdbRepo {
 	>(
 		tableName: string
 	): DdbTable<Id, Item> {
-		return new DdbTable(this, tableName);
+		return new DdbTable(this as DdbRepo<any>, tableName);
 	}
 
-	public async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>> {
+	/**
+	 * Uses BatchWriteItemCommand to save all the given items.
+	 * If needed, multiple batches will be used.
+	 * Only unprocessed items are returned.
+	 */
+	public async saveAll(items: Item[], tableName?: string): Promise<BatchWriteResults<Item>>;
+	public async saveAll(items: Item[], ddbTableName?: string): Promise<BatchWriteResults<Item>> {
 		let errorCount = 0;
+
 		const unprocessed: Item[] = [];
 
 		const client = this.getClient();
 
-		const { BatchPutMaxItemCount } = DdbRepo;
-		const batches = partition(values, (_, index) => Math.floor(index / BatchPutMaxItemCount));
+		const itemToTableName = ddbTableName
+			? () => ddbTableName
+			: this.itemToTableName;
+
+		const batches = splitIntoBatches(items, this.batchPutMaxItemCount);
+
 		for (const batch of batches) {
 			const RequestItems: BatchWriteRequestItems = { };
-			batch.forEach(value => {
-				// double check we have a valid id / type
-				if (value.id && value.objectType) {
-					const tableItem = RequestItems[value.objectType] ??= [];
-					tableItem.push({ PutRequest:{ Item:serialize(value).M! } });
-				}else {
-					warn(`Invalid Value: DdbRepo.saveAll(${toLiteral(value)})`);
-				}
-			});
+
+			for (const item of batch) {
+
+				const tableName = itemToTableName(item);
+				const tableItems = RequestItems[tableName] ??= [];
+
+				tableItems.push({ PutRequest:{ Item:serialize(item).M! } });
+
+			}
 
 			const command = new BatchWriteItemCommand({ RequestItems });
 			const response = await client.send(command).catch(errorReturnUndefined);
-			if (response?.$metadata.httpStatusCode !== 200) errorCount++; // NOSONAR
+
+			if (response?.$metadata.httpStatusCode !== 200) {
+				errorCount++;
+			}
+
 			if (response?.UnprocessedItems) {
-				Object.keys(response.UnprocessedItems).forEach(objectType => {
-					response.UnprocessedItems?.[objectType]?.forEach(wr => {
-						unprocessed.push(deserializeObject<Item>(wr.PutRequest!.Item!));
+
+				Object.values(response.UnprocessedItems).forEach(writeRequests => {
+					writeRequests.forEach(({ PutRequest }) => {
+						const item = deserializeObject<Item>(PutRequest!.Item!);
+						unprocessed.push(item);
 					});
 				});
+
 			}
 		}
 
@@ -184,7 +259,7 @@ export class DdbRepo {
 			errorCount,
 			unprocessed,
 			success: errorCount === 0 && unprocessedCount === 0,
-			partial: unprocessedCount > 0 && unprocessedCount < values.length
+			partial: unprocessedCount > 0 && unprocessedCount < items.length
 		};
 	}
 
@@ -213,43 +288,8 @@ export class DdbRepo {
 		secretAccessKey: "SECRETACCESSKEY",
 	};
 
-	/** @deprecated use instance methods */
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[]): Promise<BatchGetResults<Item>>;
-	public static async getBy<Id extends RepoId, Item extends RepoItem<Id> = RepoItem<Id>>(...keys: Optional<Item>[] | Optional<Item>[][]): Promise<BatchGetResults<Item>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		keys = keys.flat() as Optional<Item>[];
-		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
-		const results = await new DdbRepo(DdbRepo.DdbClientConfig).getBy(keys);
-		ddbRepo.destroy();
-		return results;
-	}
-
-	/** @deprecated use instance methods */
-	public static async deleteAll(keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
-	public static async deleteAll(...keys: Optional<RepoItem>[]): Promise<BatchResults<RepoItem>>;
-	public static async deleteAll(...keys: Optional<RepoItem>[] | Optional<RepoItem>[][]): Promise<BatchResults<RepoItem>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		keys = keys.flat() as RepoItem[];
-		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
-		const results = await new DdbRepo(DdbRepo.DdbClientConfig).deleteAll(keys);
-		ddbRepo.destroy();
-		return results;
-	}
-
-	/** @deprecated use instance methods */
-	public static async saveAll<Item extends RepoItem>(values: Item[]): Promise<BatchResults<Item>>;
-	public static async saveAll<Item extends RepoItem>(...values: Item[]): Promise<BatchResults<Item>>;
-	public static async saveAll<Item extends RepoItem>(...values: Item[] | Item[][]): Promise<BatchResults<Item>> {
-		/** @todo remove this when we remove the deprecated signature that spreads the args */
-		values = values.flat() as Item[];
-		const ddbRepo = new DdbRepo(DdbRepo.DdbClientConfig);
-		const results = await new DdbRepo(DdbRepo.DdbClientConfig).saveAll(values);
-		ddbRepo.destroy();
-		return results;
-	}
-
 	public static readonly BatchGetMaxItemCount = 100;
 	public static readonly BatchPutMaxItemCount = 25;
 	public static readonly MaxItemByteSize = 400 * 1024;
+	public static readonly ItemToTableName = (item: RepoItem) => item.objectType.toLowerCase() + "s";
 }

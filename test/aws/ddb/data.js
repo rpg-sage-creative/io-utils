@@ -1,3 +1,5 @@
+import { generateSnowflake } from "@rsc-utils/core-utils";
+
 const testDate = new Date();
 const testBigInt = BigInt("12345678901234567890");
 const tests = [
@@ -27,4 +29,32 @@ export function getTests(which) {
 		case "deserialize": return tests;
 		default: return [];
 	}
+}
+
+export function getJsonObjects(...objectTypes) {
+	const jsonObjects = [];
+
+	for (let i = 0; i < 50; i++) {
+		for (const objectType of objectTypes) {
+			const id = generateSnowflake();
+			jsonObjects.push({
+				name: `Random ${objectType}: ${id}`,
+				id,
+				objectType,
+
+				// throw in some other values for funsies
+				bigintValue: 1234567890n,
+				trueValue: true,
+				falseValue: false,
+				dateValue: new Date(),
+				emptyStringValue: "",
+				nullValue: null,
+				numberValue: 1234567890,
+				stringValue: "non-empty string",
+				zeroValue: 0,
+			});
+		}
+	}
+
+	return jsonObjects;
 }

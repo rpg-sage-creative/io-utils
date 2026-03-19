@@ -47,7 +47,7 @@ export function getBuffer(url, postData, opts) {
     };
     const reject = (ev, msg) => {
         cleanup();
-        __reject(msg ?? ev);
+        __reject(msg ?? `${ev}: ${url}`);
     };
     try {
         const protocol = getProtocol(url);

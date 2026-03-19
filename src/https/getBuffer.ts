@@ -93,7 +93,7 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 
 	const reject = (ev: string, msg: any) => {
 		cleanup();
-		__reject(msg ?? ev);
+		__reject(msg ?? `${ev}: ${url}`);
 	};
 
 	try {

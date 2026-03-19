@@ -1,4 +1,4 @@
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { DynamoDB, type CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
 import { type Optional } from "@rsc-utils/core-utils";
 import type { DdbClientConfig } from "./DdbClientConfig.js";
 import { DdbTable } from "./DdbTable.js";
@@ -14,6 +14,7 @@ export declare class DdbRepo<Id extends RepoId = RepoId, Item extends RepoItem<I
     readonly batchPutMaxItemCount: number;
     readonly itemToTableName: TableNameParser<Id, RepoItem<Id>>;
     constructor(config: DdbClientConfig, options?: DDbRepoOptions);
+    createTable(createTableArgs: CreateTableCommandInput): Promise<boolean>;
     private client?;
     getClient(): DynamoDB;
     destroy(): void;

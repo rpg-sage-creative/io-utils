@@ -1,4 +1,4 @@
-import { BatchGetItemCommand, BatchWriteItemCommand, DynamoDB, ListTablesCommand } from "@aws-sdk/client-dynamodb";
+import { BatchGetItemCommand, BatchWriteItemCommand, CreateTableCommand, DynamoDB, ListTablesCommand, type CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, tagLiterals, warn, type Optional } from "@rsc-utils/core-utils";
 import type { VALID_URL } from "../../url/types.js";
 import type { AwsRegion } from "../AwsRegion.js";
@@ -36,6 +36,12 @@ export class DdbRepo<
 		this.batchPutMaxItemCount = Math.max(0, Math.min(batchPutMaxItemCount, DdbRepo.BatchPutMaxItemCount));
 
 		this.itemToTableName = options?.itemToTableName ?? DdbRepo.ItemToTableName;
+	}
+
+	public async createTable(createTableArgs: CreateTableCommandInput): Promise<boolean> {
+		const command = new CreateTableCommand(createTableArgs);
+		const response = await this.getClient().send(command).catch(errorReturnUndefined);
+		return response?.TableDescription?.TableName === createTableArgs.TableName;
 	}
 
 	private client?: DynamoDB;

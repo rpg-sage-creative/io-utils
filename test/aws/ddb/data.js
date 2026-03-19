@@ -31,6 +31,20 @@ export function getTests(which) {
 	}
 }
 
+let channelIndex = 0;
+const channelIds = ["ic-channel", "ooc-channel", "gm-channel", "dice-channel", "misc-channel"];
+let userIndex = 0;
+const userIds = ["fighter-id", "rogue-id", "wizard-id"];
+function addChannelsAndUsers(objectType) {
+	if (objectType !== "Game") return undefined;
+	const channelId = channelIds[channelIndex];
+	channelIndex++;
+	if (channelIndex === channelIds.length) channelIndex = 0;
+	const userId = userIds[userIndex];
+	userIndex++;
+	if (userIndex === userIds.length) userIndex = 0;
+	return { channelIds:[{id:channelId}], userIds:[{id:userId}] };
+}
 export function getJsonObjects(...objectTypes) {
 	const jsonObjects = [];
 
@@ -41,6 +55,7 @@ export function getJsonObjects(...objectTypes) {
 				name: `Random ${objectType}: ${id}`,
 				id,
 				objectType,
+				...addChannelsAndUsers(objectType),
 
 				// throw in some other values for funsies
 				bigintValue: 1234567890n,

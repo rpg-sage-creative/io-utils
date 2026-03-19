@@ -122,6 +122,8 @@ describe("aws", () => {
 					expect(await ddbRepo.getAll(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
 				}, timeout);
 
+				// test(`ddbRepo.`)
+
 				test(tagLiterals`DdbRepo.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
 					const ddbRepo = await initDdbRepo();
 					// show they are there

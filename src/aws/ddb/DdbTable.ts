@@ -1,4 +1,4 @@
-import { CreateTableCommand, DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand, type ScanCommandInput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
+import { DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand, type CreateTableCommandInput, type ScanCommandInput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, type Awaitable, type Optional } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
@@ -44,7 +44,7 @@ export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = Re
 	public async ensure(): Promise<boolean> {
 		const existing = await this.getCasedTableName();
 		if (!existing) {
-			const command = new CreateTableCommand({
+			const createTableArgs: CreateTableCommandInput = {
 				TableName: this.tableName,
 				AttributeDefinitions: [
 					{ AttributeName:"id", AttributeType:"S" }
@@ -56,16 +56,15 @@ export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = Re
 					ReadCapacityUnits: 5,
 					WriteCapacityUnits: 5
 				}
-			});
-			const response = await this.repo.getClient().send(command).catch(errorReturnUndefined);
-			return response?.TableDescription?.TableName === this.tableName;
+			};
+			return this.repo.createTable(createTableArgs);
 		}
 		return true;
 	}
 
 	/** uses ScanCommandOutput to iterate over every item in the table */
 	public async forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void> {
-		const args: ScanCommandInput = {
+		const scanArgs: ScanCommandInput = {
 			ExclusiveStartKey: undefined,
 			TableName: this.tableName,
 		};
@@ -77,7 +76,7 @@ export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = Re
 		let results: ScanCommandOutput | undefined;
 		do {
 
-			results = await client.scan(args).catch(errorReturnUndefined);
+			results = await client.scan(scanArgs).catch(errorReturnUndefined);
 			if (results?.$metadata.httpStatusCode !== 200) break;
 
 			const items = results.Items ?? [];
@@ -86,7 +85,7 @@ export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = Re
 				await callbackfn.call(thisArg, deserializeObject(item), index, array);
 			}
 
-			args.ExclusiveStartKey = results.LastEvaluatedKey;
+			scanArgs.ExclusiveStartKey = results.LastEvaluatedKey;
 
 		}while(results.LastEvaluatedKey !== undefined);
 

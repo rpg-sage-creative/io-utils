@@ -1,4 +1,4 @@
-import { CreateTableCommand, DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { DeleteItemCommand, DeleteTableCommand, GetItemCommand, PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
@@ -38,7 +38,7 @@ export class DdbTable {
     async ensure() {
         const existing = await this.getCasedTableName();
         if (!existing) {
-            const command = new CreateTableCommand({
+            const createTableArgs = {
                 TableName: this.tableName,
                 AttributeDefinitions: [
                     { AttributeName: "id", AttributeType: "S" }
@@ -50,14 +50,13 @@ export class DdbTable {
                     ReadCapacityUnits: 5,
                     WriteCapacityUnits: 5
                 }
-            });
-            const response = await this.repo.getClient().send(command).catch(errorReturnUndefined);
-            return response?.TableDescription?.TableName === this.tableName;
+            };
+            return this.repo.createTable(createTableArgs);
         }
         return true;
     }
     async forEachAsync(callbackfn, thisArg) {
-        const args = {
+        const scanArgs = {
             ExclusiveStartKey: undefined,
             TableName: this.tableName,
         };
@@ -66,7 +65,7 @@ export class DdbTable {
         const client = this.repo.getClient();
         let results;
         do {
-            results = await client.scan(args).catch(errorReturnUndefined);
+            results = await client.scan(scanArgs).catch(errorReturnUndefined);
             if (results?.$metadata.httpStatusCode !== 200)
                 break;
             const items = results.Items ?? [];
@@ -74,7 +73,7 @@ export class DdbTable {
                 index++;
                 await callbackfn.call(thisArg, deserializeObject(item), index, array);
             }
-            args.ExclusiveStartKey = results.LastEvaluatedKey;
+            scanArgs.ExclusiveStartKey = results.LastEvaluatedKey;
         } while (results.LastEvaluatedKey !== undefined);
     }
     async get(id) {

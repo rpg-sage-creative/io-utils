@@ -23,7 +23,7 @@ export async function sendSns({ clientConfig, content, subject }: Args): Promise
 		TopicArn: topicArn
 	});
 
-	const results = await snsClient.send(command).catch(warnReturnUndefined);
+	const response = await snsClient.send(command).catch(warnReturnUndefined);
 
-	return results?.$metadata.httpStatusCode === 200;
+	return response?.$metadata.httpStatusCode === 200;
 }

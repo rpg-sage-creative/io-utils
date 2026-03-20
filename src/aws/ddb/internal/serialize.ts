@@ -46,9 +46,12 @@ function serializeArrayOrSet(value: unknown): AttributeValue | undefined {
 }
 
 /** serializes the object using key/value pairs */
-function serializeObject(value: object): AttributeValue {
-	return Object.keys(value).reduce((out, key) => {
-		out.M[key] = serialize(value[key as keyof typeof value]);
+function serializeObject(object: object): AttributeValue {
+	return Object.keys(object).reduce((out, key) => {
+		const value = object[key as keyof typeof object];
+		if (value !== undefined) {
+			out.M[key] = serialize(value);
+		}
 		return out;
 	}, { M:{} } as any);
 }

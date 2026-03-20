@@ -31,9 +31,12 @@ function serializeArrayOrSet(value) {
     }
     return undefined;
 }
-function serializeObject(value) {
-    return Object.keys(value).reduce((out, key) => {
-        out.M[key] = serialize(value[key]);
+function serializeObject(object) {
+    return Object.keys(object).reduce((out, key) => {
+        const value = object[key];
+        if (value !== undefined) {
+            out.M[key] = serialize(value);
+        }
         return out;
     }, { M: {} });
 }

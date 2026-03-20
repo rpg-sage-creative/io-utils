@@ -1,4 +1,4 @@
-import { formatDataFilePath, generateSnowflake } from "@rsc-utils/core-utils";
+import { formatDataFilePath, generateSnowflake, noop } from "@rsc-utils/core-utils";
 import PDFParser from "pdf2json";
 import { deleteFile } from "../fs/deleteFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -15,7 +15,7 @@ export class PdfCacher {
         this.cachedPdfPath = formatDataFilePath({ dir: ["cache", "pdf"], name: this.id, ext: "pdf" });
     }
     async setCache() {
-        const buffer = await getBuffer(this.url).catch(() => undefined);
+        const buffer = await getBuffer(this.url).catch(noop);
         if (buffer) {
             return writeFile(this.cachedPdfPath, buffer, { makeDir: true }).catch(() => false);
         }

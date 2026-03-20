@@ -1,4 +1,4 @@
-import { formatDataFilePath, generateSnowflake, type Optional, type Snowflake } from "@rsc-utils/core-utils";
+import { formatDataFilePath, generateSnowflake, noop, type Optional, type Snowflake } from "@rsc-utils/core-utils";
 import PDFParser from "pdf2json";
 import { deleteFile } from "../fs/deleteFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -24,7 +24,7 @@ export class PdfCacher {
 
 	/** Reads from the url and writes the local file. */
 	private async setCache(): Promise<boolean> {
-		const buffer = await getBuffer(this.url).catch(() => undefined);
+		const buffer = await getBuffer(this.url).catch(noop);
 		if (buffer) {
 			return writeFile(this.cachedPdfPath, buffer, { makeDir:true }).catch(() => false);
 		}

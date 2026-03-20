@@ -1,4 +1,4 @@
-import { formatDataFilePath, generateSnowflake, type Optional, type Snowflake } from "@rsc-utils/core-utils";
+import { formatDataFilePath, generateSnowflake, noop, type Optional, type Snowflake } from "@rsc-utils/core-utils";
 import { deleteFile } from "../fs/deleteFile.js";
 import { readFile } from "../fs/readFile.js";
 import { writeFile } from "../fs/writeFile.js";
@@ -22,7 +22,7 @@ export class ImageCacher {
 
 	/** Reads from the url and writes the local file. */
 	private async setCache(): Promise<boolean> {
-		const buffer = await getBuffer(this.url).catch(() => undefined);
+		const buffer = await getBuffer(this.url).catch(noop);
 		if (buffer) {
 			return writeFile(this.cachedImagePath, buffer, { makeDir:true }).catch(() => false);
 		}

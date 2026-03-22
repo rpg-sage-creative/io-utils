@@ -32,26 +32,31 @@ export function getTests(which) {
 }
 
 let channelIndex = 0;
-const channelIds = ["ic-channel", "ooc-channel", "gm-channel", "dice-channel", "misc-channel"];
+const _channelIds = ["ic-channel", "ooc-channel", "gm-channel", "dice-channel", "misc-channel"];
 let userIndex = 0;
-const userIds = ["fighter-id", "rogue-id", "wizard-id"];
+const _userIds = ["fighter-id", "rogue-id", "wizard-id"];
 function addChannelsAndUsers(objectType) {
 	if (objectType !== "Game") return undefined;
-	const channelId = channelIds[channelIndex];
+	const channelIds = _channelIds.slice(channelIndex, channelIndex + 2);
 	channelIndex++;
-	if (channelIndex === channelIds.length) channelIndex = 0;
-	const userId = userIds[userIndex];
+	if (channelIndex === _channelIds.length) channelIndex = 0;
+	const userId = _userIds[userIndex];
 	userIndex++;
-	if (userIndex === userIds.length) userIndex = 0;
-	return { channelIds:[{id:channelId}], userIds:[{id:userId}] };
+	if (userIndex === _userIds.length) userIndex = 0;
+	return {
+		channels: channelIds.reduce((out, channelId) => { out[channelId] = {}; return out; }, {}),
+		relatedIds: [userId].concat(channelIds),
+		users: [{id:userId}],
+	};
 }
 export function getJsonObjects(...objectTypes) {
 	const jsonObjects = [];
 
-	for (let i = 0; i < 50; i++) {
+	const itemCount = 50;
+	for (let i = 0; i < itemCount; i++) {
 		for (const objectType of objectTypes) {
 			const id = generateSnowflake();
-			jsonObjects.push({
+			const item = {
 				name: `Random ${objectType}: ${id}`,
 				id,
 				objectType,
@@ -67,7 +72,11 @@ export function getJsonObjects(...objectTypes) {
 				numberValue: 1234567890,
 				stringValue: "non-empty string",
 				zeroValue: 0,
-			});
+			};
+			// toStrictEqual complains about keys missing vs keys with undefined
+			// serializing the data removes keys with undefined values
+			if (i === 0) item.archivedTs = Date.now();
+			jsonObjects.push(item);
 		}
 	}
 

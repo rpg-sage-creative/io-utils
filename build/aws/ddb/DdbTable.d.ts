@@ -1,27 +1,51 @@
-import { type Awaitable, type Optional } from "@rsc-utils/core-utils";
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type CreateTableCommandOutput, type DeleteItemCommandOutput, type DeleteTableCommandOutput, type GetItemCommandOutput, type PutItemCommandOutput, type QueryCommandOutput } from "@aws-sdk/client-dynamodb";
+import { type Awaitable, type OrUndefined, type Snowflake } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
-import { type BatchDeleteResults, type BatchWriteResults, type IdResolvable, type RepoId, type RepoItem } from "./types.js";
+import type { BatchWriteResults, RepoId, RepoItem } from "./types.js";
 export declare class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = RepoItem<Id>> {
     repo: DdbRepo;
-    tableName: string;
-    constructor(repo: DdbRepo, tableName: string);
-    /** deletes the item in the table for the given id */
-    delete(id: Optional<IdResolvable<Id>>): Promise<boolean>;
-    deleteAll(ids: Optional<IdResolvable<Id>>[]): Promise<BatchDeleteResults<RepoId>>;
-    /** @deprecated @intrernal drops the table if it exists ... DEBUG / TEST ONLY */
-    drop(): Promise<boolean>;
-    /** @deprecated @intrernal ensures the table exists ... DEBUG / TEST ONLY */
-    ensure(): Promise<boolean>;
-    /** uses ScanCommandOutput to iterate over every item in the table */
-    forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<void>, thisArg?: any): Promise<void>;
+    objectType: string;
+    readonly tableName: string;
+    constructor(repo: DdbRepo, objectType: string);
+    /** used by .forEachAsync and .query */
+    private createQueryCommandInput;
+    /** returns true if the item in the table is deleted */
+    delete(id: Id): Promise<boolean>;
+    /** returns true if all the items in the table are deleted */
+    delete(ids: Id[]): Promise<boolean>;
+    /** returns BatchDeleteResults */
+    delete(ids: Id[], returnOutput: true): Promise<BatchWriteResults<RepoItem<Id>>>;
+    drop(returnOutput: true): Promise<DeleteTableCommandOutput>;
+    ensure(returnOutput: true): Promise<CreateTableCommandOutput>;
+    exists(): Promise<boolean | undefined>;
+    /**
+     * Queries the table for objects with matching objectType and iterates them.
+     * callbackfn array will always be an empty array.
+     *
+     * @param callbackfn
+     * @param thisArg
+     * @returns
+     */
+    forEachAsync<T extends Item = Item>(callbackfn: (value: T, index: number, array: T[]) => Awaitable<unknown>, thisArg?: any): Promise<void>;
     /** returns the item in the table for the given id */
-    get<T extends Item = Item>(id: Optional<Id>): Promise<T | undefined>;
+    get<T extends Item = Item>(id: Id): Promise<OrUndefined<T>>;
     /** returns the items in the table for the given ids */
-    getAll<T extends Item = Item>(ids: Optional<Id>[]): Promise<(T | undefined)[]>;
-    /** checks the ddb table names to get correctly cased table name for this table */
-    protected getCasedTableName(): Promise<string | undefined>;
-    /** saves the item given to the table */
-    save<T extends Item = Item>(value: Optional<T>): Promise<boolean>;
-    /** saves all the items given to the table */
-    saveAll<T extends Item = Item>(values: T[]): Promise<BatchWriteResults<T>>;
+    get<T extends Item = Item>(ids: Id[]): Promise<OrUndefined<T>[]>;
+    /** returns all the items in the table */
+    getAll<T extends Item = Item>(): Promise<T[]>;
+    /** A prebuilt query conmand that returns all table items of the objecttype that match the given filter arguments (archived/relatedId) */
+    query({ archived, relatedId }: {
+        archived?: boolean;
+        relatedId?: Snowflake;
+    }): Promise<Item[]>;
+    /** returns true if the item is saved */
+    save<T extends Item = Item>(value: T): Promise<boolean>;
+    /** returns true if all the items are saved */
+    save<T extends Item = Item>(values: T[]): Promise<boolean>;
+    /** returns BatchWriteResults */
+    save<T extends Item = Item>(values: T[], returnOutput: true): Promise<BatchWriteResults<Item>>;
+    send(cmd: DeleteItemCommand): Promise<DeleteItemCommandOutput>;
+    send(cmd: GetItemCommand): Promise<GetItemCommandOutput>;
+    send(cmd: PutItemCommand): Promise<PutItemCommandOutput>;
+    send(cmd: QueryCommand): Promise<QueryCommandOutput>;
 }

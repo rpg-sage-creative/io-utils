@@ -1,5 +1,6 @@
 import type { AttributeValue } from "@aws-sdk/client-dynamodb";
 import { isDate } from "util/types";
+import type { BatchRequestKey, RepoItem } from "../types.js";
 
 /** attempts to serialize array and sets. returns undefined if the value is neither */
 function serializeArrayOrSet(value: unknown): AttributeValue | undefined {
@@ -96,4 +97,11 @@ export function serialize(value: unknown): AttributeValue {
 		BinarySet: { BS:Uint8Array[]; }
 		*/
 	}
+}
+
+export function serializeKey(key: RepoItem): BatchRequestKey {
+	return {
+		id: serialize(key.id),
+		objectType: serialize(key.objectType),
+	};
 }

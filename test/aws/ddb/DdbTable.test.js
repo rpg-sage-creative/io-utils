@@ -34,13 +34,9 @@ async function initDdbRepo() {
 	});
 }
 
-async function initDdbTable(tableName) {
+async function initDdbTable(objectType) {
 	const ddbRepo = await initDdbRepo();
-	return ddbRepo.for(tableName);
-}
-
-function objectTypeToTableName(objectType) {
-	return objectType.toLowerCase() + "s";
+	return ddbRepo.for(objectType);
 }
 
 /** @type {number | undefined} */
@@ -58,7 +54,7 @@ describe("aws", () => {
 
 			const objectType = "Character";
 			const jsonObjects = getJsonObjects(objectType);
-			const getDdbTable = () => initDdbTable(objectTypeToTableName(objectType));
+			const getDdbTable = () => initDdbTable(objectType);
 
 			//#endregion
 
@@ -102,7 +98,7 @@ describe("aws", () => {
 				};
 			}, timeout);
 
-			test(`ddbTable.delete(idOrItem) (${jsonObjects.length} items)`, async() => {
+			test(`ddbTable.delete(id) (${jsonObjects.length} items)`, async() => {
 				const ddbTable = await getDdbTable();
 				for (const json of jsonObjects) {
 					// delete and confirm
@@ -124,8 +120,8 @@ describe("aws", () => {
 
 			const objectType = "Message";
 			const jsonObjects = getJsonObjects(objectType);
-			const idKeys = jsonObjects.map(({ id, objectType }) => ({ id, objectType }));
-			const getDdbTable = () => initDdbTable(objectTypeToTableName(objectType));
+			const ids = jsonObjects.map(({ id }) => id);
+			const getDdbTable = () => initDdbTable(objectType);
 
 			const expectedGetNoneResults = jsonObjects.map(() => undefined);
 
@@ -156,40 +152,39 @@ describe("aws", () => {
 				expect(await ddbTable.ensure()).toBe(true);
 			}, timeout);
 
-			test(tagLiterals`ddbTable.saveAll(...) --> ${expectedSaveAllResults}`, async () => {
+			test(tagLiterals`ddbTable.save(...) --> ${expectedSaveAllResults}`, async () => {
 				const ddbTable = await getDdbTable();
 				// show they aren't there
-				expect(await ddbTable.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+				expect(await ddbTable.get(ids)).toStrictEqual(expectedGetNoneResults);
 				// save them
-				expect(await ddbTable.saveAll(jsonObjects)).toStrictEqual(expectedSaveAllResults);
+				expect(await ddbTable.save(jsonObjects)).toBe(true);
 				// show they are there
-				expect(await ddbTable.getAll(idKeys)).toStrictEqual(expectedGetAllResults);
+				expect(await ddbTable.get(ids)).toStrictEqual(expectedGetAllResults);
 			}, timeout);
 
 			test(tagLiterals`ddbTable.forEachAsync(fn)`, async () => {
-				const objectIds = jsonObjects.map(o => o.id);
 				const ddbTable = await getDdbTable();
 				await ddbTable.forEachAsync(async (value, index, array) => {
-					expect(objectIds.includes(value.id)).toBe(true);
+					expect(ids.includes(value.id)).toBe(true);
 				});
-			});
-
-			test(`ddbTable.getAll(...)`, async () => {
-				const ddbTable = await getDdbTable();
-				// reverse list and fetch
-				const reversedKeys = idKeys.slice().reverse();
-				// show the results are ordered as the keys
-				expect(await ddbTable.getAll(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
 			}, timeout);
 
-			test(tagLiterals`ddbTable.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
+			test(`ddbTable.get(...)`, async () => {
+				const ddbTable = await getDdbTable();
+				// reverse list and fetch
+				const reversedIds = ids.slice().reverse();
+				// show the results are ordered as the keys
+				expect(await ddbTable.get(reversedIds)).toStrictEqual(expectedGetAllResultsReversed);
+			}, timeout);
+
+			test(tagLiterals`ddbTable.delete(...) --> ${expectedDeleteAllResults}`, async () => {
 				const ddbTable = await getDdbTable();
 				// show they are there
-				expect(await ddbTable.getAll(jsonObjects)).toStrictEqual(expectedGetAllResults);
+				expect(await ddbTable.get(ids)).toStrictEqual(expectedGetAllResults);
 				// delete them
-				expect(await ddbTable.deleteAll(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
+				expect(await ddbTable.delete(ids)).toBe(true);
 				// show they aren't there
-				expect(await ddbTable.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+				expect(await ddbTable.get(ids)).toStrictEqual(expectedGetNoneResults);
 			}, timeout);
 
 			test(`ddbTable.drop()`, async () => {

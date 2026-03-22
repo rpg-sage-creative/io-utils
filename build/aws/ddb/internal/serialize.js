@@ -63,3 +63,9 @@ export function serialize(value) {
         default: throw new Error(`Cannot serialize: ${typeof (value)}`);
     }
 }
+export function serializeKey(key) {
+    return {
+        id: serialize(key.id),
+        objectType: serialize(key.objectType),
+    };
+}

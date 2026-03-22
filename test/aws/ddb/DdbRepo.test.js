@@ -34,13 +34,9 @@ async function initDdbRepo() {
 	});
 }
 
-async function initDdbTable(tableName) {
+async function initDdbTable(objectType) {
 	const ddbRepo = await initDdbRepo();
-	return ddbRepo.for(tableName);
-}
-
-function objectTypeToTableName(objectType) {
-	return objectType.toLowerCase() + "s";
+	return ddbRepo.for(objectType);
 }
 
 /** @type {number | undefined} */
@@ -57,7 +53,7 @@ describe("aws", () => {
 			const objectTypes = ["Bot", "Game", "Server"];
 			const jsonObjects = getJsonObjects(...objectTypes);
 			const idKeys = jsonObjects.map(({ id, objectType }) => ({ id, objectType }));
-			const getDdbTable = (objectType) => initDdbTable(objectTypeToTableName(objectType));
+			const getDdbTable = (objectType) => initDdbTable(objectType);
 
 			describe(`Create Test Tables`, () => {
 				test(JSON.stringify(objectTypes), async () => {
@@ -73,7 +69,7 @@ describe("aws", () => {
 				const expectedGetNoneResults = {
 					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
 					errorCount: 0,
-					values: jsonObjects.map(() => undefined)
+					items: jsonObjects.map(() => undefined)
 				};
 
 				const expectedSaveAllResults = {
@@ -87,13 +83,13 @@ describe("aws", () => {
 				const expectedGetAllResults = {
 					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
 					errorCount: 0,
-					values: jsonObjects
+					items: jsonObjects
 				};
 
 				const expectedGetAllResultsReversed = {
 					batchCount: Math.ceil(jsonObjects.length / DdbRepo.BatchGetMaxItemCount),
 					errorCount: 0,
-					values: jsonObjects.slice().reverse()
+					items: jsonObjects.slice().reverse()
 				};
 
 				const expectedDeleteAllResults = {
@@ -104,34 +100,32 @@ describe("aws", () => {
 					partial: false
 				};
 
-				test(tagLiterals`ddbRepo.saveAll(...) --> ${expectedSaveAllResults}`, async () => {
+				test(tagLiterals`ddbRepo.save(...) --> ${expectedSaveAllResults}`, async () => {
 					const ddbRepo = await initDdbRepo();
 					// show they aren't there
-					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+					expect(await ddbRepo.get(idKeys)).toStrictEqual(expectedGetNoneResults);
 					// save them
-					expect(await ddbRepo.saveAll(jsonObjects)).toStrictEqual(expectedSaveAllResults);
+					expect(await ddbRepo.save(jsonObjects)).toStrictEqual(expectedSaveAllResults);
 					// show they are there
-					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetAllResults);
+					expect(await ddbRepo.get(idKeys)).toStrictEqual(expectedGetAllResults);
 				}, timeout);
 
-				test(`ddbRepo.getAll`, async () => {
+				test(`ddbRepo.get(...)`, async () => {
 					const ddbRepo = await initDdbRepo();
 					// reverse list and fetch
 					const reversedKeys = idKeys.slice().reverse();
 					// show the results are ordered as the keys
-					expect(await ddbRepo.getAll(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
+					expect(await ddbRepo.get(reversedKeys)).toStrictEqual(expectedGetAllResultsReversed);
 				}, timeout);
 
-				// test(`ddbRepo.`)
-
-				test(tagLiterals`DdbRepo.deleteAll(...) --> ${expectedDeleteAllResults}`, async () => {
+				test(tagLiterals`DdbRepo.delete(...) --> ${expectedDeleteAllResults}`, async () => {
 					const ddbRepo = await initDdbRepo();
 					// show they are there
-					expect(await ddbRepo.getAll(jsonObjects)).toStrictEqual(expectedGetAllResults);
+					expect(await ddbRepo.get(jsonObjects)).toStrictEqual(expectedGetAllResults);
 					// delete them
-					expect(await ddbRepo.deleteAll(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
+					expect(await ddbRepo.delete(jsonObjects)).toStrictEqual(expectedDeleteAllResults);
 					// show they aren't there
-					expect(await ddbRepo.getAll(idKeys)).toStrictEqual(expectedGetNoneResults);
+					expect(await ddbRepo.get(idKeys)).toStrictEqual(expectedGetNoneResults);
 				}, timeout);
 
 			});

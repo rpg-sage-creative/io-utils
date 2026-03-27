@@ -32,16 +32,14 @@ export async function processInBatches(ddbRepo, cmd, itemsOrKeys) {
         items: [],
         unprocessed: [],
     };
-    let batchItems = [];
-    for (const itemOrKey of itemsOrKeys) {
-        batchItems.push(itemOrKey);
-        if (batchItems.length === batchMaxItemCount) {
-            await processBatch({ ddbRepo, cmd, batchItems }, results);
-            batchItems = [];
-        }
-    }
-    if (batchItems.length) {
+    let startIndex = 0;
+    let batchItems;
+    while (startIndex < itemsOrKeys.length) {
+        batchItems = itemsOrKeys.slice(startIndex, startIndex + batchMaxItemCount);
+        if (!batchItems.length)
+            break;
         await processBatch({ ddbRepo, cmd, batchItems }, results);
+        startIndex += batchItems.length;
     }
     if (cmd === "Get") {
         return {

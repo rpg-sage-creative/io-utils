@@ -94,28 +94,21 @@ export async function processInBatches<
 		unprocessed: [],
 	};
 
-	let batchItems: Item[] = [];
+	let startIndex = 0;
+	let batchItems: Item[];
 
-	for (const itemOrKey of itemsOrKeys) {
-		// add the item to the batch
-		batchItems.push(itemOrKey);
+	while (startIndex < itemsOrKeys.length) {
+		// select the next batch of items
+		batchItems = itemsOrKeys.slice(startIndex, startIndex + batchMaxItemCount);
 
-		// if our batch is full ...
-		if (batchItems.length === batchMaxItemCount) {
+		// if we don't get any items, we are done
+		if (!batchItems.length) break;
 
-			// ... process the batch
-			await processBatch<Item>({ ddbRepo, cmd, batchItems }, results);
-
-			// ... reset it
-			batchItems = [];
-		}
-
-	}
-
-	// if our last batch wasn't full ...
-	if (batchItems.length) {
 		// ... process the batch
-		await processBatch({ ddbRepo, cmd, batchItems }, results);
+		await processBatch<Item>({ ddbRepo, cmd, batchItems }, results);
+
+		// advance the startIndex
+		startIndex += batchItems.length;
 	}
 
 	if (cmd === "Get") {

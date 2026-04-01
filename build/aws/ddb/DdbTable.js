@@ -52,7 +52,8 @@ export class DdbTable {
         const exists = await this.exists();
         if (!exists) {
             const createTableArgs = DdbRepo.getCreateTableInput(this.tableName);
-            return this.repo.createTable(createTableArgs, returnOutput);
+            const updateTableArgs = DdbRepo.getUpdateTimeToLiveInput(this.tableName);
+            return this.repo.createTable(createTableArgs, updateTableArgs, returnOutput);
         }
         return true;
     }

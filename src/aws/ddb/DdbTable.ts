@@ -1,4 +1,4 @@
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type AttributeValue, type CreateTableCommandOutput, type DeleteItemCommandOutput, type DeleteTableCommandOutput, type GetItemCommandOutput, type PutItemCommandOutput, type QueryCommandInput, type QueryCommandOutput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type AttributeValue, type CreateTableCommandOutput, type DeleteItemCommandOutput, type DeleteTableCommandOutput, type GetItemCommandOutput, type PutItemCommandOutput, type QueryCommandInput, type QueryCommandOutput, type ScanCommandOutput, type UpdateTimeToLiveCommandOutput } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, type Awaitable, type OrUndefined, type Snowflake } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import { deserializeObject } from "./internal/deserialize.js";
@@ -66,12 +66,13 @@ export class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<Id> = Re
 
 	/** @deprecated @internal ensures the table exists ... DEBUG / TEST ONLY */
 	public async ensure(): Promise<boolean>;
-	public async ensure(returnOutput: true): Promise<CreateTableCommandOutput>;
-	public async ensure(returnOutput?: boolean): Promise<boolean | CreateTableCommandOutput> {
+	public async ensure(returnOutput: true): Promise<{ create:CreateTableCommandOutput; update?:UpdateTimeToLiveCommandOutput; }>;
+	public async ensure(returnOutput?: boolean): Promise<boolean | { create:CreateTableCommandOutput; update?:UpdateTimeToLiveCommandOutput; }> {
 		const exists = await this.exists();
 		if (!exists) {
 			const createTableArgs = DdbRepo.getCreateTableInput(this.tableName);
-			return this.repo.createTable(createTableArgs, returnOutput as true);
+			const updateTableArgs = DdbRepo.getUpdateTimeToLiveInput(this.tableName);
+			return this.repo.createTable(createTableArgs, updateTableArgs, returnOutput as true);
 		}
 		return true;
 	}

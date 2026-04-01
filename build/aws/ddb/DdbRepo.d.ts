@@ -1,4 +1,4 @@
-import { DynamoDB, type CreateTableCommandInput, type CreateTableCommandOutput, type DeleteTableCommandOutput } from "@aws-sdk/client-dynamodb";
+import { DynamoDB, type CreateTableCommandInput, type CreateTableCommandOutput, type DeleteTableCommandOutput, type UpdateTimeToLiveCommandInput, type UpdateTimeToLiveCommandOutput } from "@aws-sdk/client-dynamodb";
 import { type Awaitable } from "@rsc-utils/core-utils";
 import type { DdbClientConfig } from "./DdbClientConfig.js";
 import { DdbTable } from "./DdbTable.js";
@@ -16,7 +16,12 @@ export declare class DdbRepo<Id extends RepoId = RepoId, Item extends RepoItem<I
     readonly tableNameParser: TableNameParser;
     constructor(config: DdbClientConfig, options?: DDbRepoOptions);
     createTable(createTableArgs: CreateTableCommandInput): Promise<boolean>;
+    createTable(createTableArgs: CreateTableCommandInput, updateTableArgs: UpdateTimeToLiveCommandInput): Promise<boolean>;
     createTable(createTableArgs: CreateTableCommandInput, returnOutput: true): Promise<CreateTableCommandOutput>;
+    createTable(createTableArgs: CreateTableCommandInput, updateTableArgs: UpdateTimeToLiveCommandInput, returnOutput: true): Promise<{
+        create: CreateTableCommandOutput;
+        update: UpdateTimeToLiveCommandOutput;
+    }>;
     destroy(): void;
     dropTable(tableName: string): Promise<boolean>;
     dropTable(tableName: string, returnOutput: true): Promise<DeleteTableCommandOutput>;
@@ -54,6 +59,8 @@ export declare class DdbRepo<Id extends RepoId = RepoId, Item extends RepoItem<I
     testConnection(): Promise<boolean>;
     /** Returns a CreateTableCommandInput with the commonly used settings expected for RPG Sage Creative projects. */
     static getCreateTableInput(tableName: string): CreateTableCommandInput;
+    /** Returns a UpdateTimeToLiveCommandInput with the commonly used settings expected for RPG Sage Creative projects. */
+    static getUpdateTimeToLiveInput(tableName: string): UpdateTimeToLiveCommandInput;
     /** Returns a DynamoDb object for the given config. If no config is given, then DdbRepo.LocalstackTestConfig is used. */
     static getClient(config?: DdbClientConfig): DynamoDB;
     /** Tests that a command can be sent successfully. If no client is given, then a client is created using DdbRepo.LocalstackTestConfig */

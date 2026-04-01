@@ -1,12 +1,12 @@
-import { CreateTableCommand, DeleteTableCommand, DynamoDB, ListTablesCommand, type CreateTableCommandInput, type CreateTableCommandOutput, type DeleteTableCommandOutput, type ScanCommandInput, type ScanCommandOutput } from "@aws-sdk/client-dynamodb";
+import { CreateTableCommand, DeleteTableCommand, DynamoDB, ListTablesCommand, UpdateTimeToLiveCommand, type CreateTableCommandInput, type CreateTableCommandOutput, type DeleteTableCommandOutput, type ScanCommandInput, type ScanCommandOutput, type UpdateTimeToLiveCommandInput, type UpdateTimeToLiveCommandOutput } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, noop, type Awaitable } from "@rsc-utils/core-utils";
 import type { VALID_URL } from "../../url/types.js";
 import type { AwsRegion } from "../AwsRegion.js";
 import type { DdbClientConfig } from "./DdbClientConfig.js";
 import { DdbTable } from "./DdbTable.js";
+import { deserializeObject } from "./internal/deserialize.js";
 import { processInBatches } from "./internal/processInBatches.js";
 import type { BatchGetResults, BatchWriteResults, RepoId, RepoItem, TableNameParser } from "./types.js";
-import { deserializeObject } from "./internal/deserialize.js";
 
 /*
  * 400 KB max json size in DDB
@@ -40,15 +40,46 @@ export class DdbRepo<
 	}
 
 	public async createTable(createTableArgs: CreateTableCommandInput): Promise<boolean>;
+	public async createTable(createTableArgs: CreateTableCommandInput, updateTableArgs: UpdateTimeToLiveCommandInput): Promise<boolean>;
 	public async createTable(createTableArgs: CreateTableCommandInput, returnOutput: true): Promise<CreateTableCommandOutput>;
-	public async createTable(createTableArgs: CreateTableCommandInput, returnOutput?: boolean): Promise<boolean | CreateTableCommandOutput> {
-		const command = new CreateTableCommand(createTableArgs);
+	public async createTable(createTableArgs: CreateTableCommandInput, updateTableArgs: UpdateTimeToLiveCommandInput, returnOutput: true): Promise<{ create:CreateTableCommandOutput; update:UpdateTimeToLiveCommandOutput; }>;
+	public async createTable(...args: (CreateTableCommandInput | UpdateTimeToLiveCommandInput | true)[]) {
+		const createTableArgs = args.shift() as CreateTableCommandInput;
+		const returnOutput = args[0] === true ? args.shift() as true : false;
+		const updateTableArgs = args.shift() as UpdateTimeToLiveCommandInput | undefined;
 
-		const promise = this.getClient().send(command);
-		if (returnOutput) return promise;
+		const client = this.getClient();
 
-		const response = await promise.catch(errorReturnUndefined);
-		return response?.TableDescription?.TableName === createTableArgs.TableName;
+		const createCommand = new CreateTableCommand(createTableArgs);
+		const createOutput = await client.send(createCommand).catch(errorReturnUndefined);
+		const created = createOutput?.$metadata.httpStatusCode === 200
+			&& createOutput?.TableDescription?.TableName === createTableArgs.TableName;
+
+		// failed to create, no need to run update
+		if (!created) {
+			if (!returnOutput) return false;
+			if (updateTableArgs) {
+				return { create:createOutput };
+			}
+			return createOutput;
+		}
+
+		// no ttl args, no need to run update
+		if (!updateTableArgs) {
+			return returnOutput
+				? createOutput
+				: true;
+		}
+
+		const updateCommand = new UpdateTimeToLiveCommand(updateTableArgs);
+		const updateOutput = await client.send(updateCommand).catch(errorReturnUndefined);
+		const updated = updateOutput?.$metadata.httpStatusCode === 200
+			&& updateOutput.TimeToLiveSpecification?.AttributeName === updateTableArgs.TimeToLiveSpecification?.AttributeName
+			&& updateOutput.TimeToLiveSpecification?.Enabled === updateTableArgs.TimeToLiveSpecification?.Enabled;
+
+		return returnOutput
+			? { create:createOutput, update:updateOutput }
+			: updated;
 	}
 
 	public destroy(): void {
@@ -189,6 +220,17 @@ export class DdbRepo<
 			BillingMode: "PAY_PER_REQUEST",
 			StreamSpecification: {
 				StreamEnabled: false,
+			},
+		};
+	}
+
+	/** Returns a UpdateTimeToLiveCommandInput with the commonly used settings expected for RPG Sage Creative projects. */
+	public static getUpdateTimeToLiveInput(tableName: string): UpdateTimeToLiveCommandInput {
+		return {
+			TableName: tableName,
+			TimeToLiveSpecification: {
+				AttributeName: "expireTs",
+				Enabled: true,
 			},
 		};
 	}

@@ -1,4 +1,4 @@
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type CreateTableCommandOutput, type DeleteItemCommandOutput, type DeleteTableCommandOutput, type GetItemCommandOutput, type PutItemCommandOutput, type QueryCommandOutput } from "@aws-sdk/client-dynamodb";
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type CreateTableCommandOutput, type DeleteItemCommandOutput, type DeleteTableCommandOutput, type GetItemCommandOutput, type PutItemCommandOutput, type QueryCommandOutput, type UpdateTimeToLiveCommandOutput } from "@aws-sdk/client-dynamodb";
 import { type Awaitable, type OrUndefined, type Snowflake } from "@rsc-utils/core-utils";
 import { DdbRepo } from "./DdbRepo.js";
 import type { BatchWriteResults, RepoId, RepoItem } from "./types.js";
@@ -16,7 +16,10 @@ export declare class DdbTable<Id extends RepoId = RepoId, Item extends RepoItem<
     /** returns BatchDeleteResults */
     delete(ids: Id[], returnOutput: true): Promise<BatchWriteResults<RepoItem<Id>>>;
     drop(returnOutput: true): Promise<DeleteTableCommandOutput>;
-    ensure(returnOutput: true): Promise<CreateTableCommandOutput>;
+    ensure(returnOutput: true): Promise<{
+        create: CreateTableCommandOutput;
+        update?: UpdateTimeToLiveCommandOutput;
+    }>;
     exists(): Promise<boolean | undefined>;
     /**
      * Queries the table for objects with matching objectType and iterates them.

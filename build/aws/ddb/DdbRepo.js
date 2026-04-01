@@ -1,8 +1,8 @@
-import { CreateTableCommand, DeleteTableCommand, DynamoDB, ListTablesCommand } from "@aws-sdk/client-dynamodb";
+import { CreateTableCommand, DeleteTableCommand, DynamoDB, ListTablesCommand, UpdateTimeToLiveCommand } from "@aws-sdk/client-dynamodb";
 import { errorReturnUndefined, noop } from "@rsc-utils/core-utils";
 import { DdbTable } from "./DdbTable.js";
-import { processInBatches } from "./internal/processInBatches.js";
 import { deserializeObject } from "./internal/deserialize.js";
+import { processInBatches } from "./internal/processInBatches.js";
 export class DdbRepo {
     config;
     client;
@@ -17,13 +17,36 @@ export class DdbRepo {
         this.batchPutMaxItemCount = Math.max(0, Math.min(batchPutMaxItemCount, DdbRepo.BatchPutMaxItemCount));
         this.tableNameParser = options?.tableNameParser ?? DdbRepo.TableNameParser;
     }
-    async createTable(createTableArgs, returnOutput) {
-        const command = new CreateTableCommand(createTableArgs);
-        const promise = this.getClient().send(command);
-        if (returnOutput)
-            return promise;
-        const response = await promise.catch(errorReturnUndefined);
-        return response?.TableDescription?.TableName === createTableArgs.TableName;
+    async createTable(...args) {
+        const createTableArgs = args.shift();
+        const returnOutput = args[0] === true ? args.shift() : false;
+        const updateTableArgs = args.shift();
+        const client = this.getClient();
+        const createCommand = new CreateTableCommand(createTableArgs);
+        const createOutput = await client.send(createCommand).catch(errorReturnUndefined);
+        const created = createOutput?.$metadata.httpStatusCode === 200
+            && createOutput?.TableDescription?.TableName === createTableArgs.TableName;
+        if (!created) {
+            if (!returnOutput)
+                return false;
+            if (updateTableArgs) {
+                return { create: createOutput };
+            }
+            return createOutput;
+        }
+        if (!updateTableArgs) {
+            return returnOutput
+                ? createOutput
+                : true;
+        }
+        const updateCommand = new UpdateTimeToLiveCommand(updateTableArgs);
+        const updateOutput = await client.send(updateCommand).catch(errorReturnUndefined);
+        const updated = updateOutput?.$metadata.httpStatusCode === 200
+            && updateOutput.TimeToLiveSpecification?.AttributeName === updateTableArgs.TimeToLiveSpecification?.AttributeName
+            && updateOutput.TimeToLiveSpecification?.Enabled === updateTableArgs.TimeToLiveSpecification?.Enabled;
+        return returnOutput
+            ? { create: createOutput, update: updateOutput }
+            : updated;
     }
     destroy() {
         this.client?.destroy();
@@ -106,6 +129,15 @@ export class DdbRepo {
             BillingMode: "PAY_PER_REQUEST",
             StreamSpecification: {
                 StreamEnabled: false,
+            },
+        };
+    }
+    static getUpdateTimeToLiveInput(tableName) {
+        return {
+            TableName: tableName,
+            TimeToLiveSpecification: {
+                AttributeName: "expireTs",
+                Enabled: true,
             },
         };
     }

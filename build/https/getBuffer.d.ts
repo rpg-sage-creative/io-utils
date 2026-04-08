@@ -1,8 +1,12 @@
 import { type ProgressTracker } from "@rsc-utils/core-utils";
-type Opts = {
+export type GetBufferOpts = {
+    /** defaults to true */
+    followRedirects?: boolean;
+    headers?: Record<string, string>;
+    /** defaults to false */
     logPercent?: boolean;
     progressTracker?: ProgressTracker;
-    /** milliseconds */
+    /** milliseconds; defaults to no timeout */
     timeout?: number;
 };
 /**
@@ -15,5 +19,4 @@ export declare function getBuffer(url: string): Promise<Buffer>;
  * If you pass in a url with "http://" it will downgrade to use http protocol instead of https.
  * Sending postData will stringify the value and then do a POST instead of a GET.
 */
-export declare function getBuffer<T = any>(url: string, postData: T, opts?: Opts): Promise<Buffer>;
-export {};
+export declare function getBuffer<T = any>(url: string, postData: T, opts?: GetBufferOpts): Promise<Buffer>;

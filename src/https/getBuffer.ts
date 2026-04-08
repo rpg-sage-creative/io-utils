@@ -2,19 +2,23 @@ import { stringifyJson, typeError, verbose, type Optional, type ProgressTracker 
 import type { FollowResponse, RedirectableRequest } from "follow-redirects";
 import type { IncomingMessage } from "node:http";
 import { pipeline } from "node:stream";
-import { createGunzip, type Gunzip } from "node:zlib";
+import { createBrotliDecompress, createGunzip, type Gunzip } from "node:zlib";
 import { fileExists } from "../fs/fileExists.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
 
-type Response = IncomingMessage & FollowResponse;
-type Stream = (IncomingMessage & FollowResponse) | Gunzip;
+type Response = IncomingMessage | (IncomingMessage & FollowResponse);
+type Stream = IncomingMessage | (IncomingMessage & FollowResponse) | Gunzip;
 
-type Opts = {
+export type GetBufferOpts = {
+	/** defaults to true */
+	followRedirects?: boolean;
+	headers?: Record<string, string>;
+	/** defaults to false */
 	logPercent?: boolean;
 	progressTracker?: ProgressTracker;
-	/** milliseconds */
+	/** milliseconds; defaults to no timeout */
 	timeout?: number;
 };
 
@@ -29,9 +33,9 @@ export function getBuffer(url: string): Promise<Buffer>;
  * If you pass in a url with "http://" it will downgrade to use http protocol instead of https.
  * Sending postData will stringify the value and then do a POST instead of a GET.
 */
-export function getBuffer<T = any>(url: string, postData: T, opts?: Opts): Promise<Buffer>;
+export function getBuffer<T = any>(url: string, postData: T, opts?: GetBufferOpts): Promise<Buffer>;
 
-export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Promise<Buffer> {
+export function getBuffer<T = any>(url: string, postData?: T, opts?: GetBufferOpts): Promise<Buffer> {
 	if (typeof(url) !== "string") {
 		return Promise.reject(typeError({ argKey:"url", mustBe:"a valid url string", value:url }));
 	}
@@ -102,18 +106,20 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 
 	try {
 
-		const protocol = getProtocol(url);
+		const protocol = getProtocol(url, opts?.followRedirects as false);
 		const payload = postData ? stringifyJson(postData) : null;
 		const options = payload ? {
 			headers: {
-				"Content-Type": "application/json",
-				"Content-Length": payload.length,
 				"Accept-Encoding": "gzip",
+				"Content-Length": payload.length,
+				"Content-Type": "application/json",
+				...opts?.headers,
 			},
 			method: "POST"
 		} : {
 			headers: {
-				"Accept-Encoding": "gzip",
+				"Accept-Encoding": "gzip, br",
+				...opts?.headers,
 			},
 			method: "GET"
 		};
@@ -179,11 +185,7 @@ function processResponse({ response, resolve, reject, progressTracker }: Process
 		}
 
 		// create the stream based on content encoding
-		stream = response.headers["content-encoding"] === "gzip"
-			// if content is encoded as gzip, we need a gunzip stream
-			? pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void(0))
-			// otherwise just use the response as is
-			: response;
+		stream = createStream(response, reject);
 
 		stream.once("close", (err: any) =>
 			reject("stream.close", err)
@@ -217,4 +219,30 @@ function processResponse({ response, resolve, reject, progressTracker }: Process
 	}
 
 	return stream;
+}
+
+/** Creates a stream appropriate to the content-encoding. */
+function createStream(response: Response, reject: (ev: string, err: unknown) => void): Stream {
+	const contentEncoding = response.headers["content-encoding"];
+
+	// if content is encoded as gzip, we need a gunzip stream
+	if (contentEncoding === "gzip") {
+		return pipeline(
+			response,
+			createGunzip(),
+			err => err ? reject("stream.gunzip", err) : void(0)
+		);
+	}
+
+	// if content is encoded as br, we need a brotli stream
+	if (contentEncoding === "br") {
+		return pipeline(
+			response,
+			createBrotliDecompress(),
+			err => err ? reject("stream.br", err) : void(0)
+		)
+	}
+
+	// otherwise just use the response as is
+	return response;
 }

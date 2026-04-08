@@ -1,6 +1,6 @@
 import { stringifyJson, typeError, verbose } from "@rsc-utils/core-utils";
 import { pipeline } from "node:stream";
-import { createGunzip } from "node:zlib";
+import { createBrotliDecompress, createGunzip } from "node:zlib";
 import { fileExists } from "../fs/fileExists.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
@@ -48,18 +48,20 @@ export function getBuffer(url, postData, opts) {
         __reject(msg ?? `${ev}: ${url}`);
     };
     try {
-        const protocol = getProtocol(url);
+        const protocol = getProtocol(url, opts?.followRedirects);
         const payload = postData ? stringifyJson(postData) : null;
         const options = payload ? {
             headers: {
-                "Content-Type": "application/json",
-                "Content-Length": payload.length,
                 "Accept-Encoding": "gzip",
+                "Content-Length": payload.length,
+                "Content-Type": "application/json",
+                ...opts?.headers,
             },
             method: "POST"
         } : {
             headers: {
-                "Accept-Encoding": "gzip",
+                "Accept-Encoding": "gzip, br",
+                ...opts?.headers,
             },
             method: "GET"
         };
@@ -99,9 +101,7 @@ function processResponse({ response, resolve, reject, progressTracker }) {
             const contentLength = +(response.headers["content-length"] ?? 0);
             progressTracker?.start(contentLength);
         }
-        stream = response.headers["content-encoding"] === "gzip"
-            ? pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void (0))
-            : response;
+        stream = createStream(response, reject);
         stream.once("close", (err) => reject("stream.close", err));
         stream.on("data", (rChunk) => {
             if (progressTracker?.started) {
@@ -126,4 +126,14 @@ function processResponse({ response, resolve, reject, progressTracker }) {
         reject("try/catch (processResponse)", ex);
     }
     return stream;
+}
+function createStream(response, reject) {
+    const contentEncoding = response.headers["content-encoding"];
+    if (contentEncoding === "gzip") {
+        return pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void (0));
+    }
+    if (contentEncoding === "br") {
+        return pipeline(response, createBrotliDecompress(), err => err ? reject("stream.br", err) : void (0));
+    }
+    return response;
 }

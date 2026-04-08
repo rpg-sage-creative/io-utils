@@ -1,8 +1,10 @@
-import { parseJson, ProgressTracker, verbose } from "@rsc-utils/core-utils";
+import { parseJson, verbose } from "@rsc-utils/core-utils";
 import { getText } from "./getText.js";
 export function getJson(url, postData, opts) {
     return new Promise((resolve, reject) => {
-        getText(url, postData, opts).then(text => {
+        const options = { ...opts };
+        options.headers = { "Accept": "application/json, */*", ...options.headers };
+        getText(url, postData, options).then(text => {
             try {
                 resolve(parseJson(text));
             }
@@ -11,7 +13,7 @@ export function getJson(url, postData, opts) {
                     reject(text);
                 }
                 else {
-                    verbose(text);
+                    verbose(text?.slice(0, 50) + "...");
                     reject(ex);
                 }
             }

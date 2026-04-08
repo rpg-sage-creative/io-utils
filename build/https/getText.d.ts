@@ -1,9 +1,7 @@
-import type { ProgressTracker } from "@rsc-utils/core-utils";
-type Opts = {
-    logPercent?: boolean;
-    progressTracker?: ProgressTracker;
-    /** milliseconds */
-    timeout?: number;
+import { type GetBufferOpts } from "./getBuffer.js";
+export type GetTextOpts = GetBufferOpts & {
+    /** defaults to "utf8" */
+    bufferEncoding?: BufferEncoding;
 };
 /**
  * You can pass in a fully formed url or leave off the protocol and allow it to prepend "https://".
@@ -15,5 +13,4 @@ export declare function getText(url: string): Promise<string>;
  * If you pass in a url with "http://" it will downgrade to use http protocol instead of https.
  * Sending postData will stringify the value and then do a POST instead of a GET.
 */
-export declare function getText<T = any>(url: string, postData: T, opts?: Opts): Promise<string>;
-export {};
+export declare function getText<T = any>(url: string, postData: T, opts?: GetTextOpts): Promise<string>;

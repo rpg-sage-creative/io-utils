@@ -3,10 +3,13 @@ import type { FollowResponse, RedirectableRequest } from "follow-redirects";
 import type { IncomingMessage } from "node:http";
 import { pipeline } from "node:stream";
 import { createGunzip, type Gunzip } from "node:zlib";
-import { fileExistsSync } from "../fs/fileExistsSync.js";
+import { fileExists } from "../fs/fileExists.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
+
+type Response = IncomingMessage & FollowResponse;
+type Stream = (IncomingMessage & FollowResponse) | Gunzip;
 
 type Opts = {
 	logPercent?: boolean;
@@ -38,9 +41,10 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 	// we don't need to use the request logic for file reads
 	if (urlLower.startsWith("file://")) {
 		const path = url.slice(7);
-		return fileExistsSync(path)
-			? readFile(path)
-			: Promise.reject(new Error("Invalid Path"));
+		return fileExists(path).then(
+			exists => exists ? readFile(path) : Promise.reject(new Error("Invalid Path: " + url)),
+			reason => Promise.reject(reason ?? new Error("Invalid Path: " + url))
+		);
 	}
 
 	// make sure the url starts with http:// or https://
@@ -149,9 +153,6 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: Opts): Prom
 
 	return promise;
 }
-
-type Response = IncomingMessage & FollowResponse;
-type Stream = (IncomingMessage & FollowResponse) | Gunzip;
 
 type ProcessResponseArgs = {
 	response: Response;

@@ -1,7 +1,7 @@
 import { stringifyJson, typeError, verbose } from "@rsc-utils/core-utils";
 import { pipeline } from "node:stream";
 import { createGunzip } from "node:zlib";
-import { fileExistsSync } from "../fs/fileExistsSync.js";
+import { fileExists } from "../fs/fileExists.js";
 import { readFile } from "../fs/readFile.js";
 import { createHttpLogger } from "./createHttpLogger.js";
 import { getProtocol } from "./getProtocol.js";
@@ -12,9 +12,7 @@ export function getBuffer(url, postData, opts) {
     const urlLower = url.toLowerCase();
     if (urlLower.startsWith("file://")) {
         const path = url.slice(7);
-        return fileExistsSync(path)
-            ? readFile(path)
-            : Promise.reject(new Error("Invalid Path"));
+        return fileExists(path).then(exists => exists ? readFile(path) : Promise.reject(new Error("Invalid Path: " + url)), reason => Promise.reject(reason ?? new Error("Invalid Path: " + url)));
     }
     if (!(urlLower.startsWith("http://") || urlLower.startsWith("https://"))) {
         url = "https://" + url;

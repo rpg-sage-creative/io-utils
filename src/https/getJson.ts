@@ -11,7 +11,10 @@ export function getJson<T = any, U = any>(url: string, postData: U, opts?: GetJs
 export function getJson<T = any, U = any>(url: string, postData?: U, opts?: GetJsonOpts): Promise<T> {
 	return new Promise((resolve, reject) => {
 		const options = { ...opts };
-		options.headers = { "Accept":"application/json, */*", ...options.headers };
+		options.headers = {
+			"Accept": "application/json, */*",
+			...options.headers
+		};
 		getText(url, postData, options).then(text => {
 			try {
 				resolve(parseJson(text));

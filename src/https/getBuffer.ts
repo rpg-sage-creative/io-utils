@@ -110,7 +110,7 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: GetBufferOp
 		const payload = postData ? stringifyJson(postData) : null;
 		const options = payload ? {
 			headers: {
-				"Accept-Encoding": "gzip",
+				"Accept-Encoding": "gzip, br",
 				"Content-Length": payload.length,
 				"Content-Type": "application/json",
 				...opts?.headers,
@@ -118,7 +118,9 @@ export function getBuffer<T = any>(url: string, postData?: T, opts?: GetBufferOp
 			method: "POST"
 		} : {
 			headers: {
+				"Accept": "*/*",
 				"Accept-Encoding": "gzip, br",
+				"User-Agent": "RPG Sage Discord Bot - rpgsage.app",
 				...opts?.headers,
 			},
 			method: "GET"

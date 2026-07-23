@@ -30,6 +30,7 @@
 		"build:fresh": "pnpm scrub && pnpm build",
 		"pretest": "[ -d './test' ] && pnpm build && node -e \"import * as utils from './build/index.js';\"",
 		"test": "[ -d './test' ] && node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest",
+		"test:ignore-ddb": "[ -d './test' ] && node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest --testPathIgnorePatterns=/ddb/",
 		"test:one": "[ -d './test' ] && node --no-warnings --experimental-vm-modules ./node_modules/jest/bin/jest",
 		"release": "pnpm dev-scripts create-release",
 		"refresh-tags": "pnpm dev-scripts refresh-tags"

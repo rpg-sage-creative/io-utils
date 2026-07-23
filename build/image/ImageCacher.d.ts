@@ -15,7 +15,7 @@ export declare class ImageCacher {
     read(): Promise<Buffer>;
     /** Deletes the local file. */
     private removeCache;
-    /** Convenience for new PdfCacher(url).read(); */
+    /** Convenience for new ImageCacher(url).read(); */
     static read(url: Optional<string>): Promise<Buffer | undefined>;
     static readMetadata(url: Optional<string>): Promise<ImageMetadata | undefined>;
 }

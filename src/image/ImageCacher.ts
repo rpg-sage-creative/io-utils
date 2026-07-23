@@ -53,7 +53,7 @@ export class ImageCacher {
 		return deleteFile(this.cachedImagePath).catch(() => false);
 	}
 
-	/** Convenience for new PdfCacher(url).read(); */
+	/** Convenience for new ImageCacher(url).read(); */
 	public static async read(url: Optional<string>): Promise<Buffer | undefined> {
 		if (url) {
 			const cacher = new ImageCacher(url);

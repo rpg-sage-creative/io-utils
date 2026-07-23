@@ -1,3 +1,4 @@
+import { join, resolve } from "node:path";
 import { error, tagLiterals } from "@rsc-utils/core-utils";
 import { PdfCacher, PdfJsonFieldManager, PdfJsonManager, writeFileSync } from "../../build/index.js";
 
@@ -5,12 +6,16 @@ beforeAll(() => {
 	process.env.dataRoot = "./test";
 });
 
+function toTestFilePath(...parts) {
+	return "file://" + resolve(join(".", "test", ...parts));
+}
+
 describe("pdf", () => {
 	describe("PdfCacher", () => {
 
 		const tests = [
 			{ url:"https://pf2.rpgsage.io/pathbuilder-2e-mal-level-4.pdf", values:[{ key:"CharacterName",value:"Malken'throp (Mal)"}] },
-			{ url:"file:///Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/BudMastercraft.pdf", values:[{ key:"text_1wgcm", value:"Character Name" }] },
+			{ url:toTestFilePath("pdf", "in", "BudMastercraft.pdf"), values:[{ key:"text_1wgcm", value:"Character Name" }] },
 		];
 
 		tests.forEach(({ url, values }, index) => {
@@ -54,7 +59,7 @@ describe("pdf", () => {
 // 	assert(nameOne === "Malken'throp (Mal)", `Wrong CharacterName: ${nameOne}`);
 // 	// writeFileSync("./test/pdf/out/mal.json", contentOne);
 
-// 	const urlTwo = `file://Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/1264091676897448063.pdf`;
+// 	const urlTwo = toTestFilePath("pdf","in","1264091676897448063.pdf");
 // 	const managerTwo = await PdfCacher.createManager(urlTwo).catch(error);
 // 	const nameTwo = managerTwo.getString("Character_Name");
 // 	const ale_1 = managerTwo.isChecked("Ale_1");
@@ -62,14 +67,14 @@ describe("pdf", () => {
 // 	assert(ale_1, `Not Checked (Ale_1): ${ale_1}`);
 // 	// writeFileSync("./test/pdf/out/todd.json", contentTwo);
 
-// 	const urlThree = `file://Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/BudMastercraft.pdf`;
+// 	const urlThree = toTestFilePath("pdf","in","BudMastercraft.pdf");
 // 	const contentThree = await PdfCacher.read(urlThree).catch(error);
 // 	assert(!!contentThree, "File (Bud) was NOT cached and read.");
 // 	const managerThree = new PdfJsonFieldManager(contentThree, f => ({ id:+f.name.replace(/\D/g, ""), ...f }));
 // 	const nameThree = managerThree.getValue(1);
 // 	assert(nameThree === "Character Name", `Wrong Character_Name: ${nameThree}`);
 
-// 	const urlFour = `file://Users/randaltmeyer/git/rsc/io-utils/test/pdf/in/Tjut!.pdf`;
+// 	const urlFour = toTestFilePath("pdf","in","Tjut!.pdf");
 // 	const contentFour = await PdfCacher.read(urlFour).catch(error);
 // 	assert(!contentFour, `Tjut! can't be read, thus this should be false, negated, and thus ok.`);
 // 	// assert(!!contentFour, "File (Tjut!) was NOT cached and read.");

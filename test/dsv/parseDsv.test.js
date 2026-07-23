@@ -25,8 +25,13 @@ describe("string", () => {
 
 				ds.forEach(delim => {
 					if (delim === delimiter) {
+						// test specifying delimiter
 						test(tagLiterals`parseDsv(${testData}, ${delim}) matches data`, async () => {
 							expect(await parseDsv(testData, delim)).toStrictEqual(resultsData);
+						});
+						// test without delimiter to ensure it still matches the delimiter
+						test(tagLiterals`parseDsv(${testData}) matches data`, async () => {
+							expect(await parseDsv(testData)).toStrictEqual(resultsData);
 						});
 					}else {
 						test(tagLiterals`parseDsv(${testData}, ${delim}) is undefined`, async () => {

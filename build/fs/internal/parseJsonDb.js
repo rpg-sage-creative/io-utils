@@ -1,4 +1,8 @@
 import { error, parseJson } from "@rsc-utils/core-utils";
+/**
+ * @internal
+ * Designed for reading a .json.db file that is a list of json items on each line, but not an array.
+ */
 export function parseJsonDb(raw) {
     const objects = [];
     const lines = raw?.split("\n");

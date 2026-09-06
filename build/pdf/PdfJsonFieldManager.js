@@ -29,18 +29,30 @@ export class PdfJsonFieldManager {
     get length() {
         return this.fields.length;
     }
+    /** Returns the given field by matching the name or transmuted id. */
     find(value) {
         if (isDefined(value)) {
             return this.fields.find(field => field.name === value || field.id === value);
         }
         return undefined;
     }
+    /**
+     * Returns a string array if the field exists as a valid string.
+     * NewLine characters are treated as the delimiter.
+     * Returns null if the field is not a string.
+     * Returns undefined if not found.
+     */
     getArray(key, delim = ",") {
         const value = this.getValue(key);
         return isDefined(value)
             ? value.replaceAll("\n", delim).split(delim)
             : value;
     }
+    /**
+     * Finds the given field and returns true/false if the checked value is boolean.
+     * Returns null if the checked value is not boolean.
+     * Returns undefined if not found.
+     */
     getChecked(key) {
         const field = this.find(key);
         if (field) {
@@ -67,9 +79,11 @@ export class PdfJsonFieldManager {
         }
         return defValue ?? undefined;
     }
+    /** Returns true if the key was found, regards of whether or not it had a valid value. */
     has(key) {
         return this.find(key) !== undefined;
     }
+    /** Removes the field so that it cannot be reused. */
     remove(field) {
         const isNotField = (value) => ["number", "string"].includes(typeof (value));
         if (isNotField(field)) {

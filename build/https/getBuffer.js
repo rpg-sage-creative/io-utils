@@ -10,34 +10,46 @@ export function getBuffer(url, postData, opts) {
         return Promise.reject(typeError({ argKey: "url", mustBe: "a valid url string", value: url }));
     }
     const urlLower = url.toLowerCase();
+    // we don't need to use the request logic for file reads
     if (urlLower.startsWith("file://")) {
         const path = url.slice(7);
         return fileExists(path).then(exists => exists ? readFile(path) : Promise.reject(new Error("Invalid Path: " + url)), reason => Promise.reject(reason ?? new Error("Invalid Path: " + url)));
     }
+    // make sure the url starts with http:// or https://
     if (!(urlLower.startsWith("http://") || urlLower.startsWith("https://"))) {
         url = "https://" + url;
     }
     const { promise, reject: __reject, resolve: __resolve } = Promise.withResolvers();
+    // declare all objects that should be cleaned up before resolving/rejecting
     let request;
     let response;
     let stream;
     let progressTracker = opts?.logPercent || opts?.progressTracker
         ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
         : null;
+    // we need to cleanup resources regardless of resolve vs reject
     const cleanup = () => {
+        //#region stream cleanup
         stream?.removeAllListeners();
         stream?.destroy();
         stream = null;
+        //#endregion
+        //#region response cleanup
         response?.removeAllListeners();
         response?.destroy();
         response = null;
+        //#endregion
+        //#region request cleanup
         request?.removeAllListeners();
         request?.destroy();
         request = null;
+        //#endregion
+        //#region progress tracker cleanup
         if (progressTracker?.started) {
             progressTracker?.finish();
         }
         progressTracker = null;
+        //#endregion
     };
     const resolve = (buffer) => {
         cleanup();
@@ -88,6 +100,7 @@ export function getBuffer(url, postData, opts) {
         if (payload) {
             request.write(payload);
         }
+        /** @todo do I need this request.end() ??? */
         request.end();
     }
     catch (ex) {
@@ -95,6 +108,12 @@ export function getBuffer(url, postData, opts) {
     }
     return promise;
 }
+/**
+ * Reads all the data from the given response.
+ * If the encoding is gzip, then a separate stream is created using gunzip.
+ * The stream is returned so that it can be cleaned up by errors outside the response.
+ * @returns the original Response or a new gunzip Stream
+ */
 function processResponse({ response, resolve, reject, progressTracker }) {
     let stream;
     try {
@@ -103,6 +122,7 @@ function processResponse({ response, resolve, reject, progressTracker }) {
             const contentLength = +(response.headers["content-length"] ?? 0);
             progressTracker?.start(contentLength);
         }
+        // create the stream based on content encoding
         stream = createStream(response, reject);
         stream.once("close", (err) => reject("stream.close", err));
         stream.on("data", (rChunk) => {
@@ -129,13 +149,17 @@ function processResponse({ response, resolve, reject, progressTracker }) {
     }
     return stream;
 }
+/** Creates a stream appropriate to the content-encoding. */
 function createStream(response, reject) {
     const contentEncoding = response.headers["content-encoding"];
+    // if content is encoded as gzip, we need a gunzip stream
     if (contentEncoding === "gzip") {
         return pipeline(response, createGunzip(), err => err ? reject("stream.gunzip", err) : void (0));
     }
+    // if content is encoded as br, we need a brotli stream
     if (contentEncoding === "br") {
         return pipeline(response, createBrotliDecompress(), err => err ? reject("stream.br", err) : void (0));
     }
+    // otherwise just use the response as is
     return response;
 }

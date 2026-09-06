@@ -1,4 +1,5 @@
 import { error, http, ProgressTracker } from "@rsc-utils/core-utils";
+/** @internal */
 export function createHttpLogger(label, total, interval) {
     const tracker = new ProgressTracker(label, total, interval);
     tracker.on("status", evData => http(evData.message));

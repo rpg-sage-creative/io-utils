@@ -9,6 +9,7 @@ function createOptions(input, recursive) {
         default: return input;
     }
 }
+/** Combines given fileExt and fileFilter or simply returns createExtFilter("json") */
 function createFileFilter(options) {
     if (options) {
         const { fileExt, fileFilter } = options;
@@ -32,8 +33,11 @@ export function filterFilesSync(path, extOrFilterOrOpts, _recursive) {
     const files = listFilesSync(path);
     for (const fileName of files) {
         const filePath = join(path, fileName);
+        // check to see if this is a directory
         if (isDirSync(filePath)) {
+            // only process it if recursive
             if (options.recursive) {
+                // process if no dirFilter or if dirFilter returns truthy
                 const shouldProcess = !options.dirFilter
                     || options.dirFilter(fileName, filePath);
                 if (shouldProcess) {
@@ -43,6 +47,7 @@ export function filterFilesSync(path, extOrFilterOrOpts, _recursive) {
                     }
                 }
             }
+            // run this file through the filter
         }
         else if (filter(fileName, filePath)) {
             output.push(filePath);

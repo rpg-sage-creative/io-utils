@@ -1,5 +1,6 @@
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { warnReturnUndefined } from "@rsc-utils/core-utils";
+/** If SNS info is found in the env, then the subject/content are sent to SNS. */
 export async function sendSns({ clientConfig, content, subject }) {
     const { topicArn, region, ...credentials } = clientConfig;
     const snsClient = new SNSClient({

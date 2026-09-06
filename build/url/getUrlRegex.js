@@ -107,9 +107,15 @@ export const UrlRegExp = regex("i") `
 	(\#[\-\w]*)?
 `;
 export const UrlRegExpG = globalizeRegex(UrlRegExp);
+/** @todo have a serious think about wether or not iFlag is optional on a url ... */
 function createUrlRegex(options) {
     return options?.gFlag ? UrlRegExpG : UrlRegExp;
 }
+/**
+ * Returns an instance of the url regexp.
+ * If gFlag is passed, a new regexp is created.
+ * If gFlag is not passed, a cached version of the regexp is used.
+ */
 export function getUrlRegex(options) {
     return getOrCreateRegex(createUrlRegex, options);
 }

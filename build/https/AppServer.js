@@ -1,5 +1,6 @@
 import { captureProcessExit, error, info, stringifyJson, verbose } from "@rsc-utils/core-utils";
 import { createServer } from "http";
+/** Logs via error() and then returns a 500 error. */
 function errorReturn500(ex) {
     error(ex);
     return {
@@ -8,6 +9,7 @@ function errorReturn500(ex) {
         body: { error: "Unknown Error" }
     };
 }
+/** Makes sure the output is a Buffer or string. */
 function ensureOutput(output) {
     if (output === null || output === undefined) {
         return stringifyJson({ error: "null or undefined output" });
@@ -20,6 +22,9 @@ function ensureOutput(output) {
     }
     return stringifyJson(output);
 }
+/**
+ * A simple, reusable app server for offloading tasks from a process.
+ */
 export class AppServer {
     name;
     handlers;

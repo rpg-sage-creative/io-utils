@@ -1,5 +1,6 @@
 import { collectCheckFields } from "./collectCheckFields.js";
 import { collectTextFields } from "./collectTextFields.js";
+/** @internal */
 export function collectFields(json) {
     const fields = [];
     const pages = json?.Pages ?? [];

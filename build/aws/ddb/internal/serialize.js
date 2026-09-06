@@ -1,11 +1,15 @@
 import { isDate } from "util/types";
+/** attempts to serialize array and sets. returns undefined if the value is neither */
 function serializeArrayOrSet(value) {
     if (Array.isArray(value)) {
         return { L: value.map(serialize) };
     }
     if (value instanceof Set) {
+        // we send an array, so convert it now
         const values = [...value];
+        // track string, number, other types
         const types = { s: false, n: false, o: false };
+        // find the types
         for (const val of values) {
             const type = typeof (val);
             if (type === "string") {
@@ -17,20 +21,25 @@ function serializeArrayOrSet(value) {
             else {
                 types.o = true;
             }
+            // once we know we have mixed data, stop looking
             if (types.o || (types.n && types.s)) {
                 break;
             }
         }
+        // string only
         if (types.s && !types.n && !types.o) {
             return { SS: values };
         }
+        // number only
         if (types.n && !types.s && !types.o) {
             return { NS: values.map(String) };
         }
+        // let's just create a custom attribute for a Set
         return serialize({ $set: values });
     }
     return undefined;
 }
+/** serializes the object using key/value pairs */
 function serializeObject(object) {
     return Object.keys(object).reduce((out, key) => {
         const value = object[key];
@@ -41,13 +50,14 @@ function serializeObject(object) {
     }, { M: {} });
 }
 export function serialize(value) {
+    // if (value === undefined) return undefined;
     if (value === null)
-        return { NULL: true };
+        return { NULL: true }; // NOSONAR
     const arrayOrSet = serializeArrayOrSet(value);
     if (arrayOrSet !== undefined)
-        return arrayOrSet;
+        return arrayOrSet; // NOSONAR
     if (Buffer.isBuffer(value))
-        return { B: new Uint8Array(value) };
+        return { B: new Uint8Array(value) }; // NOSONAR
     if (isDate(value)) {
         return serialize({ $date: value.toISOString() });
     }
@@ -61,6 +71,9 @@ export function serialize(value) {
         case "symbol": throw new Error("Cannot serialize: symbol");
         case "undefined": throw new Error("Cannot serialize: undefined");
         default: throw new Error(`Cannot serialize: ${typeof (value)}`);
+        /*
+        BinarySet: { BS:Uint8Array[]; }
+        */
     }
 }
 export function serializeKey(key) {

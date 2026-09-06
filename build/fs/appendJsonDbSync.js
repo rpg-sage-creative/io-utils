@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileExistsSync } from "./fileExistsSync.js";
 import { contentToFileOutput } from "./internal/contentToFileOutput.js";
+/** Appends the given content to the given file path/name, optionally building the path if it doesn't exist. */
 export function appendJsonDbSync(filePath, content, options) {
     if (options?.makeDir) {
         const dirPath = dirname(filePath);

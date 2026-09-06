@@ -1,0 +1,6 @@
+allowBuilds:
+  '@parcel/watcher': true
+  exifreader: true
+  unrs-resolver: true
+
+blockExoticSubdeps: false

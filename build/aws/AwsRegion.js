@@ -32,6 +32,7 @@ const regions = [
     "me-central-1",
     "sa-east-1",
 ];
+/** a TypeGuard for AWS regions. */
 export function isAwsRegion(value) {
     return typeof (value) === "string" && regions.includes(value);
 }

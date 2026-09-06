@@ -35,10 +35,14 @@ export async function processInBatches(ddbRepo, cmd, itemsOrKeys) {
     let startIndex = 0;
     let batchItems;
     while (startIndex < itemsOrKeys.length) {
+        // select the next batch of items
         batchItems = itemsOrKeys.slice(startIndex, startIndex + batchMaxItemCount);
+        // if we don't get any items, we are done
         if (!batchItems.length)
             break;
+        // ... process the batch
         await processBatch({ ddbRepo, cmd, batchItems }, results);
+        // advance the startIndex
         startIndex += batchItems.length;
     }
     if (cmd === "Get") {

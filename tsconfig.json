@@ -4,11 +4,23 @@
 		"alwaysStrict": true,
 		"allowSyntheticDefaultImports": true,
 
-		// "exactOptionalPropertyTypes": true,
+		"composite": false,
+
+		"declaration": true,
+		// "declarationDir": "./types",
+		// "declarationMap": true,
+
+		// "esModuleInterop": true,
 
 		"forceConsistentCasingInFileNames": true,
 
+		"incremental": true,
+
+		// "importsNotUsedAsValues": "error",
+		// "verbatimModuleSyntax": true,
+
 		"lib": [ "ES2024" ],
+		// "locale": "en-US",
 
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
@@ -16,11 +28,10 @@
 		"newLine": "LF",
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitAny": true,
-		"noImplicitOverride": true,
+		// "noImplicitOverride": true,
 		"noImplicitReturns": true,
 		"noImplicitThis": true,
-		// "noPropertyAccessFromIndexSignature": true,
-		"noUncheckedIndexedAccess": true,
+		// "noUncheckedIndexedAccess": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 
@@ -28,11 +39,12 @@
 
 		"pretty": true,
 
-		"removeComments": true,
+		"removeComments": false,
 		"rootDir": "./src",
 
 		"skipLibCheck": true,
 
+		"sourceMap": false,
 		"strict": true,
 		"strictBindCallApply": true,
 		"strictFunctionTypes": true,
@@ -41,6 +53,7 @@
 		"stripInternal": true,
 
 		"target": "ES2024",
+		"types": ["node"],
 
 		"verbatimModuleSyntax": true
 	},

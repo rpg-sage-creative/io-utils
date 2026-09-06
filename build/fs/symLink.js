@@ -10,6 +10,7 @@ export async function symLink(target, path, options) {
     }
     return new Promise(async (res) => {
         try {
+            // let's just try to make it and catch the EEXIST error
             symlink(target, path, "file", () => res(true));
         }
         catch (outer) {
@@ -20,6 +21,7 @@ export async function symLink(target, path, options) {
                 return;
             }
             try {
+                // remove existing and try again
                 const deleted = await deleteFile(path);
                 if (deleted) {
                     symlink(target, path, "file", () => res(true));

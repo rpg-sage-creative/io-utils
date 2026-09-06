@@ -1,5 +1,6 @@
 import { readFileSync as fsReadFileSync } from "node:fs";
 import { fileExistsSync } from "./fileExistsSync.js";
+/** Returns a Buffer if the file exists and it can read a buffer, or null otherwise. */
 export function readFileSync(path) {
     if (fileExistsSync(path)) {
         const buffer = fsReadFileSync(path);

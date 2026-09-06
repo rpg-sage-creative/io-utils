@@ -1,3 +1,7 @@
+/**
+ * @internal
+ * Reads the PDF json and returns all of the checkbox fields.
+ */
 export function collectCheckFields(page) {
     const fields = [];
     const checkFields = page.Boxsets ?? [];

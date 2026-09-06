@@ -1,3 +1,7 @@
+/**
+ * @internal
+ * Reads the PDF json and returns all of the textbox fields.
+ */
 export function collectTextFields(page) {
     const fields = [];
     const textFields = page.Fields ?? [];

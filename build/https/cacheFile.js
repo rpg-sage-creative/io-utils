@@ -32,6 +32,7 @@ export function cacheFile(...args) {
         return Promise.reject(ex);
     }
     const { promise, reject: __reject, resolve: __resolve } = Promise.withResolvers();
+    // declare all objects that should be cleaned up before resolving/rejecting
     let request;
     let response;
     let readStream;
@@ -39,23 +40,34 @@ export function cacheFile(...args) {
     let progressTracker = opts?.logPercent || opts?.progressTracker
         ? opts.progressTracker ?? createHttpLogger(`Fetching Bytes: ${url}`, 0)
         : null;
+    // we need to cleanup resources regardless of resolve vs reject
     const cleanup = () => {
+        //#region readStream cleanup
         writeStream?.removeAllListeners();
         writeStream?.destroy();
         writeStream = null;
+        //#endregion
+        //#region readStream cleanup
         readStream?.removeAllListeners();
         readStream?.destroy();
         readStream = null;
+        //#endregion
+        //#region response cleanup
         response?.removeAllListeners();
         response?.destroy();
         response = null;
+        //#endregion
+        //#region request cleanup
         request?.removeAllListeners();
         request?.destroy();
         request = null;
+        //#endregion
+        //#region progress tracker cleanup
         if (progressTracker?.started) {
             progressTracker?.finish();
         }
         progressTracker = null;
+        //#endregion
     };
     const resolve = () => {
         cleanup();
@@ -89,6 +101,12 @@ export function cacheFile(...args) {
     }
     return promise;
 }
+/**
+ * Reads all the data from the given response.
+ * If the encoding is gzip, then a separate stream is created using gunzip.
+ * The stream is returned so that it can be cleaned up by errors outside the response.
+ * @returns the original Response or a new gunzip Stream
+ */
 function processResponse({ filePath, response, resolve, reject, progressTracker }) {
     let readStream;
     let writeStream;
@@ -97,14 +115,29 @@ function processResponse({ filePath, response, resolve, reject, progressTracker 
             const contentLength = +(response.headers["content-length"] ?? 0);
             progressTracker?.start(contentLength);
         }
+        // create the stream based on content encoding
         readStream = response.headers["content-encoding"] === "gzip"
+            // if content is encoded as gzip, we need a gunzip stream
             ? pipeline(response, createGunzip(), err => err ? reject("readStream.gunzip", err) : void (0))
+            // otherwise just use the response as is
             : response;
+        // this destroys writeStream too early, don't use
+        // readStream.once("close", (err: any) =>
+        // 	reject("readStream.close", err)
+        // );
         readStream.on("data", (rChunk) => {
             if (progressTracker?.started) {
                 progressTracker?.increment(rChunk.byteLength);
             }
         });
+        // this destroys writeStream too early, don't use
+        // readStream.once("end", () => {
+        // 	if (existsSync(filePath)) {
+        // 		resolve();
+        // 	}else {
+        // 		reject("readStream.end", "no file created");
+        // 	}
+        // });
         readStream.once("error", (err) => reject("readStream.error", err));
         verbose(`Opening file for stream: ${filePath}`);
         writeStream = createWriteStream(filePath, { encoding: "utf8" });

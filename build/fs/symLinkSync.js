@@ -12,6 +12,7 @@ export function symLinkSync(target, path, options) {
         error(ex);
     }
     try {
+        // let's just try to make it and catch the EEXIST error
         symlinkSync(target, path, "file");
     }
     catch (outer) {
@@ -21,7 +22,9 @@ export function symLinkSync(target, path, options) {
             return false;
         }
         try {
+            // remove existing
             rmSync(path, { force: true });
+            // try again
             symlinkSync(target, path, "file");
         }
         catch (inner) {

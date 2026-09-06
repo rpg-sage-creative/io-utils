@@ -4,6 +4,7 @@ function deserializeSet(value) {
     value.L.forEach(val => set.add(deserialize(val)));
     return set;
 }
+/** @internal */
 export function deserializeObject(value) {
     return Object.keys(value).reduce((out, key) => {
         try {
@@ -15,6 +16,7 @@ export function deserializeObject(value) {
         return out;
     }, {});
 }
+/** @internal */
 export function deserialize(value) {
     if ("NULL" in value) {
         return value.NULL === true ? null : undefined;

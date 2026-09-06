@@ -2,7 +2,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "run-test-all",
+			"label": "test-all",
 			"command": "pnpm",
 			"args": ["test"],
 			"type": "shell",
@@ -20,7 +20,7 @@
 			}
 		},
 		{
-			"label": "run-test-dot-js",
+			"label": "test-test-dot-js",
 			"command": "pnpm",
 			"args": ["test:dot-test-dot-js", "${file}"],
 			"type": "shell",
@@ -38,7 +38,7 @@
 			}
 		},
 		{
-			"label": "run-test-dot-ts",
+			"label": "test-test-dot-ts",
 			"command": "pnpm",
 			"args": ["test:dot-test-dot-ts", "${file}"],
 			"type": "shell",
@@ -56,12 +56,9 @@
 			}
 		},
 		{
-			"label": "run-dot-ts",
-			"command": "bash",
-			"args": [
-				"./scripts/test-src-ts-file.sh",
-				"${file}"
-			],
+			"label": "test-src-dot-ts",
+			"command": "pnpm",
+			"args": [ "dev-scripts", "test-src-ts-file", "${file}"],
 			"type": "shell",
 			"group": {
 				"kind": "test",

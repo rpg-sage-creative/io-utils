@@ -15,6 +15,6 @@ Each package/submodule in rpg-sage will use tsconfig.mono.json to ensure proper 
 		"./src"
 	],
 	"references": [
-		{ "path": "../../@rsc-utils/core-utils" },
+		{ "path": "../../@rsc-utils/core-utils/tsconfig.mono.json" },
 	],
 }

@@ -2,10 +2,10 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Jest Current File",
+			"name": "Vitest Current File",
 			"type": "node-terminal",
 			"request": "launch",
-			"command": "node --no-warnings --experimental-vm-modules node_modules/jest/bin/jest.js '${file}'",
+			"command": "pnpm vitest --run --globals '${file}'",
 			"cwd": "${workspaceFolder}"
 		}
 	]

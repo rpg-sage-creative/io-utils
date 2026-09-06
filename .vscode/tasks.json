@@ -5,6 +5,7 @@
 			"label": "run-test-all",
 			"command": "pnpm",
 			"args": ["test"],
+			"type": "shell",
 			"group": {
 				"kind": "test",
 				"isDefault": true
@@ -19,12 +20,13 @@
 			}
 		},
 		{
-			"label": "run-test-one-js",
+			"label": "run-test-dot-js",
 			"command": "pnpm",
-			"args": ["test:one", "${file}"],
+			"args": ["test:dot-test-dot-js", "${file}"],
+			"type": "shell",
 			"group": {
 				"kind": "test",
-				"isDefault": "**/*.test.js"
+				"isDefault": "**/test/**/*.test.js"
 			},
 			"presentation": {
 				"echo": true,
@@ -36,13 +38,34 @@
 			}
 		},
 		{
-			"label": "run-test-one-ts",
-			"command": "bash",
-			"args": ["-c", "pnpm build && pnpm test:one <<< echo \"$(echo '${file}' | sed s/src/test/ | sed s/\\.ts/\\.test\\.js/)\""],
+			"label": "run-test-dot-ts",
+			"command": "pnpm",
+			"args": ["test:dot-test-dot-ts", "${file}"],
 			"type": "shell",
 			"group": {
 				"kind": "test",
-				"isDefault": "**/*.ts"
+				"isDefault": "**/test/**/*.test.ts"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": false
+			}
+		},
+		{
+			"label": "run-dot-ts",
+			"command": "bash",
+			"args": [
+				"./scripts/test-src-ts-file.sh",
+				"${file}"
+			],
+			"type": "shell",
+			"group": {
+				"kind": "test",
+				"isDefault": "**/src/**/*.ts"
 			},
 			"presentation": {
 				"echo": true,

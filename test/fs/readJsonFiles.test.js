@@ -1,6 +1,5 @@
 import { readJsonFiles } from "../../build/index.js";
-
-const TEST_ROOT = "./test/fs";
+import { getTestRoot } from "./getTestRoot.js";
 
 describe("fs", () => {
 	describe("readJsonFiles", () => {
@@ -8,7 +7,7 @@ describe("fs", () => {
 		const one = {"index":0,"name":"one"};
 		const two = {"index":0,"name":"two"};
 
-		const path = `${TEST_ROOT}/files`;
+		const path = getTestRoot("files");
 
 		test(`readJsonFiles() filtered to "one"`, async () => {
 			const contentFilter = json => json.name === "one";

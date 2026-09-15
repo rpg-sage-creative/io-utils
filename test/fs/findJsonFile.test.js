@@ -1,10 +1,11 @@
 import { toLiteral } from "@rsc-utils/core-utils";
 import { findJsonFile } from "../../build/index.js";
+import { getTestRoot } from "./getTestRoot.js";
 
 describe("fs", () => {
 	describe("findJsonFile", () => {
 
-		const path = "./test/fs/files";
+		const path = getTestRoot("files");
 
 		const tests = [
 			{ path, options:{ contentFilter:json => json.name === "one" }, expected:{"index":0,"name":"one"} },

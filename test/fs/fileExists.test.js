@@ -1,13 +1,12 @@
 import { fileExists } from "../../build/index.js";
+import { getTestRoot } from "./getTestRoot.js";
 
 describe("fs", () => {
 	describe("fileExists", () => {
 
-		const TEST_ROOT = "./test/fs";
-
-		const dir = `${TEST_ROOT}/files`;
-		const file = `${TEST_ROOT}/fileExists.test.js`;
-		const invalid = `${TEST_ROOT}/NOT_VALID.js`;
+		const dir = getTestRoot("files");
+		const file = getTestRoot("fileExists.test.js");
+		const invalid = getTestRoot("NOT_VALID.js");
 
 		test(`${dir} exists`, async () => {
 			expect(await fileExists(dir)).toBe(true);

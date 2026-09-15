@@ -1,7 +1,8 @@
-import { toLiteral } from "@rsc-utils/core-utils";
+import { tagLiterals, toLiteral } from "@rsc-utils/core-utils";
 import { appendJsonDb, deleteFileSync, readTextSync, writeFile, writeFileSync, writeJsonDb, writeJsonDbSync } from "../../build/index.js";
+import { getTestRoot } from "./getTestRoot.js";
 
-const TEST_ROOT = "./test/fs";
+const TEST_ROOT = getTestRoot();
 
 describe("fs", () => {
 	describe("writeFiles", () => {
@@ -15,7 +16,7 @@ describe("fs", () => {
 			{ json:{"index":2,"name":"two","bigInt":9223372036854775807n}, text:`{"index":2,"name":"two","bigInt":{"$bigint":"9223372036854775807"}}` },
 		];
 
-		test(`writeJsonDb(${toLiteral(filePath)})`, async () => {
+		test(tagLiterals`writeJsonDb(${filePath})`, async () => {
 			const created = await writeJsonDb(filePath, tests.map(t => t.json), true);
 			expect(created).toBe(true);
 			expect(readTextSync(filePath)).toBe(tests.map(t => t.text).join("\n"));
@@ -23,7 +24,7 @@ describe("fs", () => {
 			expect(deleted).toBe(true);
 		});
 
-		test(`writeJsonDbSync(${toLiteral(filePath)})`, () => {
+		test(tagLiterals`writeJsonDbSync(${filePath})`, () => {
 			const created = writeJsonDbSync(filePath, tests.map(t => t.json), true);
 			expect(created).toBe(true);
 			expect(readTextSync(filePath)).toBe(tests.map(t => t.text).join("\n"));
@@ -33,7 +34,7 @@ describe("fs", () => {
 
 		tests.forEach(({ json, text }, index) => {
 			// writeFileSync json
-			test(`writeFileSync(${toLiteral(filePath)}, ${toLiteral(json)})`, () => {
+			test(tagLiterals`writeFileSync(${filePath}, ${json})`, () => {
 				const created = writeFileSync(filePath, json, true);
 				expect(created).toBe(true);
 				expect(readTextSync(filePath)).toBe(text);
@@ -41,7 +42,7 @@ describe("fs", () => {
 				expect(deleted).toBe(true);
 			});
 			// writeFileSync text
-			test(`writeFileSync(${toLiteral(filePath)}, ${toLiteral(text)})`, () => {
+			test(tagLiterals`writeFileSync(${filePath}, ${text})`, () => {
 				const created = writeFileSync(filePath, text, true);
 				expect(created).toBe(true);
 				expect(readTextSync(filePath)).toBe(text);
@@ -49,7 +50,7 @@ describe("fs", () => {
 				expect(deleted).toBe(true);
 			});
 			// writeFile json
-			test(`writeFile(${toLiteral(filePath)}, ${toLiteral(json)})`, async () => {
+			test(tagLiterals`writeFile(${filePath}, ${json})`, async () => {
 				const success = await writeFile(filePath, json, true);
 				expect(success).toBe(true);
 				expect(readTextSync(filePath)).toBe(text);
@@ -57,7 +58,7 @@ describe("fs", () => {
 				expect(deleted).toBe(true);
 			});
 			// writeFileSync text
-			test(`writeFile(${toLiteral(filePath)}, ${toLiteral(text)})`, async () => {
+			test(tagLiterals`writeFile(${filePath}, ${text})`, async () => {
 				const success = await writeFile(filePath, text, true);
 				expect(success).toBe(true);
 				expect(readTextSync(filePath)).toBe(text);
@@ -65,7 +66,7 @@ describe("fs", () => {
 				expect(deleted).toBe(true);
 			});
 			// appendJsonDb json
-			test(`appendJsonDb`, async () => {
+			test(tagLiterals`appendJsonDb`, async () => {
 				const appended = await appendJsonDb(jsonDbFilePath, json, true);
 				expect(appended).toBe(true);
 				const text = tests.slice(0, index + 1).map(t => t.text).join("\n"); // NOSONAR

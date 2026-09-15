@@ -1,25 +1,24 @@
-import { toLiteral } from "@rsc-utils/core-utils";
+import { tagLiterals } from "@rsc-utils/core-utils";
 import { isDir, isDirSync } from "../../build/index.js";
+import { getTestRoot } from "./getTestRoot.js";
 
 describe("fs", () => {
 
-	const TEST_ROOT = "./test/fs";
-
-	const dir = `${TEST_ROOT}/files`;
-	const file = `${TEST_ROOT}/isDir.test.js`;
-	const invalid = `${TEST_ROOT}/NOT_VALID.js`;
+	const dir = getTestRoot("files");
+	const file = getTestRoot("isDir.test.js");
+	const invalid = getTestRoot("NOT_VALID.js");
 
 	describe("isDir", () => {
 
-		test(`isDir(${toLiteral(dir)}) === true`, async () => {
+		test(tagLiterals`isDir(${dir}) === true`, async () => {
 			expect(await isDir(dir)).toBe(true);
 		});
 
-		test(`isDir(${toLiteral(file)}) === false`, async () => {
+		test(tagLiterals`isDir(${file}) === false`, async () => {
 			expect(await isDir(file)).toBe(false);
 		});
 
-		test(`isDir(${toLiteral(invalid)}) should throw`, async () => {
+		test(tagLiterals`isDir(${invalid}) should throw`, async () => {
 			let err;
 			await isDir(invalid).catch(_err => err = _err);
 			expect(err).toBeDefined();
@@ -29,15 +28,15 @@ describe("fs", () => {
 
 	describe("isDirSync", () => {
 
-		test(`isDirSync(${toLiteral(dir)}) === true`, () => {
+		test(tagLiterals`isDirSync(${dir}) === true`, () => {
 			expect(isDirSync(dir)).toBe(true);
 		});
 
-		test(`isDirSync(${toLiteral(file)}) === false`, () => {
+		test(tagLiterals`isDirSync(${file}) === false`, () => {
 			expect(isDirSync(file)).toBe(false);
 		});
 
-		test(`isDirSync(${toLiteral(invalid)}) === false`, () => {
+		test(tagLiterals`isDirSync(${invalid}) === false`, () => {
 			expect(isDirSync(invalid)).toBe(false);
 		});
 

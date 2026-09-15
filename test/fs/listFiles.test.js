@@ -1,11 +1,10 @@
-import { toLiteral } from "@rsc-utils/core-utils";
+import { tagLiterals } from "@rsc-utils/core-utils";
 import { listFiles, listFilesSync } from "../../build/index.js";
-
-const TEST_ROOT = "./test/fs";
+import { getTestRoot } from "./getTestRoot.js";
 
 describe("fs", () => {
 
-	const path = TEST_ROOT;
+	const path = getTestRoot();
 
 	const testFiles = [
 		'deleteFile.test.js',
@@ -24,16 +23,17 @@ describe("fs", () => {
 
 	const files = [
 		'files',
+		'getTestRoot.js',
 	]
 	.concat(testFiles)
 	.sort();
 
 	describe("listFiles", () => {
 
-		test(`listFiles(${toLiteral(path)})`, async () => {
+		test(tagLiterals`listFiles(${path})`, async () => {
 			expect(await listFiles(path)).toStrictEqual(files);
 		});
-		test(`listFiles(${toLiteral(path)}, "test.js")`, async () => {
+		test(tagLiterals`listFiles(${path}, "test.js")`, async () => {
 			expect(await listFiles(path, "test.js")).toStrictEqual(testFiles);
 		});
 
@@ -41,10 +41,10 @@ describe("fs", () => {
 
 	describe("listFilesSync", () => {
 
-		test(`listFilesSync(${toLiteral(path)})`, async () => {
+		test(tagLiterals`listFilesSync(${path})`, () => {
 			expect(listFilesSync(path)).toStrictEqual(files);
 		});
-		test(`listFilesSync(${toLiteral(path)}, "test.js")`, async () => {
+		test(tagLiterals`listFilesSync(${path}, "test.js")`, () => {
 			expect(listFilesSync(path, "test.js")).toStrictEqual(testFiles);
 		});
 

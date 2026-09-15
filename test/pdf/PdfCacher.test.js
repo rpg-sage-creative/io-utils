@@ -7,6 +7,9 @@ beforeAll(() => {
 });
 
 function toTestFilePath(...parts) {
+	if (resolve(".").includes("/rpg-sage")) {
+		return "file://" + resolve(join("packages/@rsc-utils/io-utils", "test", ...parts));
+	}
 	return "file://" + resolve(join(".", "test", ...parts));
 }
 

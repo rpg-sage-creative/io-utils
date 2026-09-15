@@ -1,14 +1,13 @@
 import { enableLogLevels, tagLiterals } from "@rsc-utils/core-utils";
 import { deleteFile, fileExists, readJsonFile, symLink } from "../../build/index.js";
+import { getTestRoot } from "./getTestRoot.js";
 
 enableLogLevels("development");
 
 describe("fs", () => {
 	describe("symLink", () => {
 
-		const TEST_ROOT = "./test/fs";
-
-		const dir = `${TEST_ROOT}/files`;
+		const dir = getTestRoot("files");
 		const file = `${dir}/jsonFile.json`;
 		const original = `./jsonFile.json`
 		const link = `${dir}/jsonFile.link.json`;
